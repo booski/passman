@@ -1,0 +1,31 @@
+
+     +--+   +--+       +--+
+  +-¤|p1|¤--|g1|¤------|u1|
+  |  +--+  /+--+      /+--+
+  |       /          /     
+  |  +--+¤          /      
+  +-¤|p2|          /       ¤=connector
+  |  +--+¤        /        
+  |       \      /         
+  |  +--+  \+--+¤          
+  +-¤|p3|¤--|g2|       +--+
+  |  +--+   +--+¤------|u2|
+  |                    +--+
+  |                        
+  |         +--+       +--+
+  +---------|mk|¤------|u3|
+            +--+       +--+
+
+  type/contentname.keyname : key -> contents
+
+  pass/<pname>.<gname> : <gtoken> -> <pass>
+  pass/<pname>.admin : <mtoken> -> <pass>
+  
+  group/<gname>.<uname> : <utoken> -> <gtoken>
+  group/<gname>.admin : <mtoken> -> <gtoken>
+  group/admin.<uname> : <utoken> -> <mtoken>
+  
+  user/<uname> : <upass> -> <utoken>
+  user/<uname>.admin : <mtoken> -> <utoken>
+
+  user/master : <mpass> -> <mtoken>

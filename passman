@@ -1,0 +1,81 @@
+#!/bin/bash
+
+API="cryptapi.sh"
+FUNCTIONS=$(grep "function" $API | sed -e "s/^function //" -e "s/ {$//")
+UNAME=""
+UTOKEN=""
+ADMIN=""
+ADMPASS=""
+
+SCRIPT=$0
+
+function help {
+    echo "$1: TBD"
+}
+
+function validate {
+    if [ -z "$UNAME" ]
+    then
+	read -p "Username: " UNAME
+    fi
+    if [ -z "$UTOKEN" ]
+    then
+	read -sp "Password: " pass
+	UTOKEN=$(./$API decrypt user/$UNAME $pass) || UTOKEN=""
+	unset pass
+    fi
+}
+
+function menu {
+    action="-"
+    while [ -n $action ]
+    do
+	echo -n "passman> "
+	read action
+	execute $action
+    done
+}
+
+function execute {
+    command=$1
+    shift
+
+    case "$command" in
+	get-pass )
+	    validate || break
+	    ./$API show-pass $UNAME $UTOKEN $1 2>/dev/null || "$UNAME cannot acces $1"
+	    ;;
+	list )
+	    if [ -n $2 ]
+	    then
+		./$API list-passwords | grep -E "$2"
+	    else
+		./$API list-passwords
+	    fi
+	    ;;
+	
+}
+
+while var=$(echo "$1" | grep -E "^-")
+do
+    case "$var" in
+	-u )
+	    shift
+	    UNAME=$1 && shift
+	    validate
+	    ;;
+	-* )
+	    usage
+	    exit 1
+	    ;;
+    esac
+done
+
+case "$1" in
+    "" )
+	menu
+	;;
+    * )
+	execute $@
+	;;
+esac

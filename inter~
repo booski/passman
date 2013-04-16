@@ -1,0 +1,8 @@
+
+ passman <args>
+ <args> := [ -u <name> ] <op>
+ <op> := ""
+      := show [user <uname>|group <gname>|pass <pname>]
+      := manage [user <uname> [+|-]<gname>|group <gname> [+|-]<pname>]
+      := [add|del] [user <uname>|group <gname>|pass <pname>]
+      := [promote|demote] <uname>
