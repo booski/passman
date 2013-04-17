@@ -124,7 +124,7 @@ function show-pass {
 	    gtoken=$(decrypt group/$group.$uname $utoken)
 	    
 	    decrypt pass/$pname.$group $gtoken
-	    return 0
+	    return $?
 	fi
     done
     return 1
