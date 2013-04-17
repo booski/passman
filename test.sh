@@ -6,12 +6,15 @@
 echo "########################## STARTING ##########################"
 
 echo "Cleaning up..."
-rm user/*
-rm group/*
-rm pass/*
+rm -rf user/*
+rm -rf group/*
+rm -rf pass/*
 echo "done."
 
 echo "Bootstrapping..."
+mkdir user
+mkdir group
+mkdir pass
 token=$(make-token) || exit $?
 encrypt user/admin adminpass $token || exit $?
 admintoken=$(validate-user admin adminpass) || exit $?
