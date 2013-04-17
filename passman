@@ -5,6 +5,8 @@ FUNCTIONS=$(grep "function" $API | sed -e "s/^function //" -e "s/ {$//")
 UNAME=""
 UTOKEN=""
 
+ATOKEN=""
+
 SCRIPT=$0
 
 . $API #What does this actually mean?
@@ -23,6 +25,21 @@ function validate {
 	read -sp "Password: " pass
 	UTOKEN=$(decrypt user/$UNAME $pass) || UTOKEN=""
 	unset pass
+    fi
+}
+
+function validate-admin {
+    if ls user/admin.$UNAME 2>/dev/null
+    then
+	read -sp "Password: " pass
+	ATOKEN=$(decrypt user/admin.$UNAME $pass)
+	unset pass
+	return $?
+    else
+	read -sp "Administrator password: " pass
+	ATOKEN=$(decrypt user/admin $pass)
+	unset pass
+	return $?
     fi
 }
 
@@ -49,7 +66,7 @@ function execute {
     case "$action" in
 	get )
 	    validate
-	    show-pass "$1"
+	    show-pass $UNAME $UTOKEN "$1"
 	    return $?
 	    ;;
 	list )
@@ -141,8 +158,8 @@ function execute {
 		    return $?
 	    esac
 	    
-	    validate || return $?
-	    ${action}$type $name $member
+	    validate-admin || return $?
+	    ${action}$type $ATOKEN $name $member
 	    return $?
 	    ;;
 	add|del )
@@ -154,20 +171,20 @@ function execute {
 		action="remove"
 	    fi
 
-	    validate || return $?
-	    ${action}"-"$type $name
+	    validate-admin || return $?
+	    ${action}"-"$type $ATOKEN $name
 	    return $?
 	    ;;
 	promote )
 	    name=$1
 	    validate || return $?
-	    make-user-admin $name
+	    make-user-admin $ATOKEN $name
 	    return $?
 	    ;;
 	demote )
 	    name=$1
 	    validate || return $?
-	    unmake-user-admin $name
+	    unmake-user-admin $ATOKEN $name
 	    return $?
 	    ;;
 	* )
@@ -178,9 +195,9 @@ function execute {
 
 while var=$(echo "$1" | grep -E "^-")
 do
+    shift
     case "$var" in
 	-u )
-	    shift
 	    UNAME=$1 && shift
 	    validate
 	    ;;
