@@ -73,9 +73,7 @@ function execute {
     case "$action" in
 	get )
 	    validate
-#	    echo $UNAME
-#	    echo $UTOKEN
-	    show-pass $UNAME $UTOKEN "$1"
+	    show-pass $UNAME $UTOKEN "$1" || echo "$UNAME cannot access $1."
 	    return $?
 	    ;;
 	list )
