@@ -23,8 +23,11 @@ function validate {
     if [ -z "$UTOKEN" ]
     then
 	read -sp "Password: " pass
+	echo
 	UTOKEN=$(decrypt user/$UNAME $pass) || UTOKEN=""
+	result=$?
 	unset pass
+	return $result
     fi
 }
 
@@ -32,14 +35,18 @@ function validate-admin {
     if ls user/admin.$UNAME 2>/dev/null
     then
 	read -sp "Password: " pass
+	echo
 	ATOKEN=$(decrypt user/admin.$UNAME $pass)
+	result=$?
 	unset pass
-	return $?
+	return $result
     else
 	read -sp "Administrator password: " pass
+	echo
 	ATOKEN=$(decrypt user/admin $pass)
+	result=$?
 	unset pass
-	return $?
+	return $result
     fi
 }
 
@@ -66,6 +73,8 @@ function execute {
     case "$action" in
 	get )
 	    validate
+#	    echo $UNAME
+#	    echo $UTOKEN
 	    show-pass $UNAME $UTOKEN "$1"
 	    return $?
 	    ;;
