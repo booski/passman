@@ -52,7 +52,7 @@ function list-user-groups {
     uname=$1
 # prints all groups that '$1' belongs to as a space-delimited list
     
-    ls group/*.$uname | sed -r -e "s%^group/%%" -e "s%\.$uname$%%"
+    echo $(ls group/*.$uname | sed -r -e "s%^group/%%" -e "s%\.$uname$%%")
 }
 
 function list-group-passes {
@@ -60,33 +60,35 @@ function list-group-passes {
 # prints all password files belonging to '$1' as a space-delimited list
 # does not decrypt any passwords
     
-    ls pass/*.$gname | sed -r -e "s%^pass/%%" -e "s%\.$gname$%%"
+    echo $(ls pass/*.$gname | sed -r -e "s%^pass/%%" -e "s%\.$gname$%%")
 }
 
 function list-password-groups {
     pname=$1
 # prints all the groups that '$1' belongs to as a space-delimited list
     
-    ls pass/$pname.* | sed -r "s%^pass/$pname\.%%"
+    echo $(ls pass/$pname.* | sed -r "s%^pass/$pname\.%%")
 }
 
 function list-group-users {
     gname=$1
 # prints all the users that belong to '$1' as a space-delimited list
 
-    ls group/$gname.* | sed -r "s%^group/$gname\.%%"
+    echo $(ls group/$gname.* | sed -r "s%^group/$gname\.%%")
 }
 
 function list-passwords {
-    ls pass/ | sed -r -e "s%^pass/%%" -e "s%.[^.]+$%%"
+# prints all the passwords stored in the system
+# does not decrypt any passwords, only prints identifiers
+    echo $(ls pass/ | sed -r -e "s%^pass/%%" -e "s%.[^.]+$%%")
 }
 
 function list-users {
-    ls user/ | sed -r -e "s%^user/%%" -e "s%.[^.]+$%%"
+    echo $(ls user/ | sed -r -e "s%^user/%%" -e "s%.[^.]+$%%")
 }
 
 function list-groups {
-    ls group/ | sed -r -e "s%^group/%%" -e "s%.[^.]+$%%"
+    echo $(ls group/ | sed -r -e "s%^group/%%" -e "s%.[^.]+$%%")
 }
 
 function list-available {
@@ -101,7 +103,7 @@ function list-available {
 	passes=$passes" "$(list-group-passes $gname)
     done
 
-    echo $passes | tr ' ' '\n' | sort -u | tr '\n' ' '
+    echo $(echo $passes | tr ' ' '\n' | sort -u)
 }
 
 function show-pass {
@@ -290,6 +292,3 @@ function remove-pass {
 
     rm pass/$pname.*
 }
-
-# Make the script interactive
-$@
