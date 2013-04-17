@@ -1,7 +1,9 @@
 #!/bin/bash
 
+set -e
+
 API="cryptapi.sh"
-FUNCTIONS=$(grep "function" $API | sed -e "s/^function //" -e "s/ {$//")
+LEGAL_CHARS="[[:alnum:]_-]"
 UNAME=""
 UTOKEN=""
 
@@ -9,10 +11,23 @@ ATOKEN=""
 
 SCRIPT=$0
 
-. $API #What does this actually mean?
+. $API
 
-function help {
-    echo "$1: TBD"
+function assist {
+    cat <<EOF
+ $SCRIPT [-u <uname>] <command>
+
+ <comamnd> := ""
+           := get <pname>
+           := list [user|group|pass] <regexfilter>?
+           := info [user <uname>|group <gname>|pass <pname>]
+           := manage [user <uname> [+|-]<gname>|group <gname> [+|-]<pname>]
+           := [add|del] [user <uname>|group <gname>|pass <pname>]
+           := [promote|demote] <uname>
+
+ In interactive mode, any valid <command> string is allowed.
+
+EOF
 }
 
 function validate {
@@ -55,12 +70,24 @@ function menu {
     do
 	echo -n "passman> "
 	read action
+
 	case "$action" in
 	    quit|q )
 		exit 0
 		;;
+	    "help" )
+		assist
+		;;
 	    * )
-		execute $action
+		if echo $action | grep -E -e "^get $LEGAL_CHARS+$" \
+                                          -e "^list (user|group|pass).*$" \
+	                                  -e "^info (user|group|pass) $LEGAL_CHARS+$" \
+                                          -e "^manage (user|group) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
+                                          -e "^(add|del) (user|group|pass) $LEGAL_CHARS+$" \
+                                          -e "^(promote|demote) $LEGAL_CHARS+$" 2>&1 >/dev/null
+		then
+		    execute $action
+		fi
 		;;
 	esac
     done
@@ -69,7 +96,7 @@ function menu {
 function execute {
     action=$1
     shift
-
+    
     case "$action" in
 	get )
 	    validate
@@ -89,22 +116,22 @@ function execute {
 		    type="passwords"
 		    ;;
 		* )
-		    usage
+		    assist
 		    return $?
 		    ;;
 	    esac
 	    name=$2
 	    regex=$3
-
+	    
 	    list-$type $name | grep -E "$regex"
 	    return 0
 	    ;;
-
+	
 	info )
 	    case "$1" in
 		user )
 		    name=$2
-
+		    
 		    echo "$name is in the following groups:"
 		    list-user-groups $name
 		    echo
@@ -114,7 +141,7 @@ function execute {
 		    ;;
 		group )
 		    name=$2
-
+		    
 		    echo "$name has the following members:"
 		    list-group-users $name
 		    echo
@@ -124,23 +151,23 @@ function execute {
 		    ;;
 		pass )
 		    name=$2
-
+		    
 		    echo "$name belongs to the following groups:"
 		    list-password-groups $name
 		    return 0
 		    ;;
 		* )
-		    usage
+		    assist
 		    return $?
 		    ;;
-		esac
+	    esac
 	    ;;
 	manage )
 	    type=$1
 	    name=$2
 	    action=$(echo $3 | grep -o ^.)
 	    member=$(echo $3 | sed -rn "s/.(.+)/\1/p")
-
+	    
 	    case "$type" in
 		user )
 		    type="-user-group"
@@ -149,7 +176,7 @@ function execute {
 		    type="-group-pass"
 		    ;;
 		* )
-		    usage
+		    assist
 		    return $?
 		    ;;
 	    esac
@@ -161,7 +188,7 @@ function execute {
 		    action="unmap"
 		    ;;
 		* )
-		    usage
+		    assist
 		    return $?
 	    esac
 	    
@@ -177,7 +204,7 @@ function execute {
 	    then
 		action="remove"
 	    fi
-
+	    
 	    validate-admin || return $?
 	    ${action}"-"$type $ATOKEN $name
 	    return $?
@@ -194,27 +221,31 @@ function execute {
 	    unmake-user-admin $ATOKEN $name
 	    return $?
 	    ;;
+	"" )
+	    return 0
+	    ;;
 	* )
-	    usage
+	    assist
 	    return $?
     esac
 }
 
+# check for switches, act on them and discard them
 while var=$(echo "$1" | grep -E "^-")
 do
     shift
     case "$var" in
 	-u )
 	    UNAME=$1 && shift
-	    validate
 	    ;;
 	-* )
-	    usage
+	    assist
 	    exit $?
 	    ;;
     esac
 done
 
+# choose interactive mode if no further arguments
 case "$1" in
     "" )
 	menu
