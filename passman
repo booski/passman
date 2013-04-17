@@ -4,10 +4,10 @@ API="cryptapi.sh"
 FUNCTIONS=$(grep "function" $API | sed -e "s/^function //" -e "s/ {$//")
 UNAME=""
 UTOKEN=""
-ADMIN=""
-ADMPASS=""
 
 SCRIPT=$0
+
+. $API #What does this actually mean?
 
 function help {
     echo "$1: TBD"
@@ -21,39 +21,159 @@ function validate {
     if [ -z "$UTOKEN" ]
     then
 	read -sp "Password: " pass
-	UTOKEN=$(./$API decrypt user/$UNAME $pass) || UTOKEN=""
+	UTOKEN=$(decrypt user/$UNAME $pass) || UTOKEN=""
 	unset pass
     fi
 }
 
 function menu {
-    action="-"
-    while [ -n $action ]
+    while true
     do
 	echo -n "passman> "
 	read action
-	execute $action
+	case "$action" in
+	    quit|q )
+		exit 0
+		;;
+	    * )
+		execute $action
+		;;
+	esac
     done
 }
 
 function execute {
-    command=$1
+    action=$1
     shift
 
-    case "$command" in
-	get-pass )
-	    validate || break
-	    ./$API show-pass $UNAME $UTOKEN $1 2>/dev/null || "$UNAME cannot acces $1"
+    case "$action" in
+	get )
+	    validate
+	    show-pass "$1"
+	    return $?
 	    ;;
 	list )
-	    if [ -n $2 ]
-	    then
-		./$API list-passwords | grep -E "$2"
-	    else
-		./$API list-passwords
-	    fi
+	    type=""
+	    case "$1" in
+		user )
+		    type="users"
+		    ;;
+		group )
+		    type="groups"
+		    ;;
+		pass )
+		    type="passwords"
+		    ;;
+		* )
+		    usage
+		    return $?
+		    ;;
+	    esac
+	    name=$2
+	    regex=$3
+
+	    list-$type $name | grep -E "$regex"
+	    return 0
 	    ;;
-	
+
+	info )
+	    case "$1" in
+		user )
+		    name=$2
+
+		    echo "$name is in the following groups:"
+		    list-user-groups $name
+		    echo
+		    echo "$name can access the following passwords:"
+		    list-available $name
+		    return 0
+		    ;;
+		group )
+		    name=$2
+
+		    echo "$name has the following members:"
+		    list-group-users $name
+		    echo
+		    echo "$name contains the following passwords:"
+		    list-group-passes $name
+		    return 0
+		    ;;
+		pass )
+		    name=$2
+
+		    echo "$name belongs to the following groups:"
+		    list-password-groups $name
+		    return 0
+		    ;;
+		* )
+		    usage
+		    return $?
+		    ;;
+		esac
+	    ;;
+	manage )
+	    type=$1
+	    name=$2
+	    action=$(echo $3 | grep -o ^.)
+	    member=$(echo $3 | sed -rn "s/.(.+)/\1/p")
+
+	    case "$type" in
+		user )
+		    type="-user-group"
+		    ;;
+		group )
+		    type="-group-pass"
+		    ;;
+		* )
+		    usage
+		    return $?
+		    ;;
+	    esac
+	    case "$action" in
+		"+" )
+		    action="map"
+		    ;;
+		"-" )
+		    action="unmap"
+		    ;;
+		* )
+		    usage
+		    return $?
+	    esac
+	    
+	    validate || return $?
+	    ${action}$type $name $member
+	    return $?
+	    ;;
+	add|del )
+	    type=$1
+	    name=$2
+	    
+	    if [ "$action" = "del" ]
+	    then
+		action="remove"
+	    fi
+
+	    validate || return $?
+	    ${action}"-"$type $name
+	    return $?
+	    ;;
+	promote )
+	    name=$1
+	    validate || return $?
+	    make-user-admin $name
+	    return $?
+	    ;;
+	demote )
+	    name=$1
+	    validate || return $?
+	    unmake-user-admin $name
+	    return $?
+	    ;;
+	* )
+	    usage
+	    return $?
+    esac
 }
 
 while var=$(echo "$1" | grep -E "^-")
@@ -66,7 +186,7 @@ do
 	    ;;
 	-* )
 	    usage
-	    exit 1
+	    exit $?
 	    ;;
     esac
 done
