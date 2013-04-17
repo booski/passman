@@ -2,6 +2,7 @@
  passman <args>
  <args> := [-u <name>]? <op>
  <op> := ""
+      := get <pname>
       := list [user|group|pass] <regexfilter>?
       := show [user <uname>|group <gname>|pass <pname>]
       := manage [user <uname> [+|-]<gname>|group <gname> [+|-]<pname>]
