@@ -52,7 +52,7 @@ function list-user-groups {
     uname=$1
 # prints all groups that '$1' belongs to as a space-delimited list
     
-    echo $(ls group/*.$uname | sed -r -e "s%^group/%%" -e "s%\.$uname$%%")
+    echo $(ls group/*.$uname | sed -r -e "s%^group/%%" -e "s%\.$uname$%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-group-passes {
@@ -60,35 +60,35 @@ function list-group-passes {
 # prints all password files belonging to '$1' as a space-delimited list
 # does not decrypt any passwords
     
-    echo $(ls pass/*.$gname | sed -r -e "s%^pass/%%" -e "s%\.$gname$%%")
+    echo $(ls pass/*.$gname | sed -r -e "s%^pass/%%" -e "s%\.$gname$%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-password-groups {
     pname=$1
 # prints all the groups that '$1' belongs to as a space-delimited list
     
-    echo $(ls pass/$pname.* | sed -r "s%^pass/$pname\.%%")
+    echo $(ls pass/$pname.* | sed -r "s%^pass/$pname\.%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-group-users {
     gname=$1
 # prints all the users that belong to '$1' as a space-delimited list
 
-    echo $(ls group/$gname.* | sed -r "s%^group/$gname\.%%")
+    echo $(ls group/$gname.* | sed -r "s%^group/$gname\.%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-passwords {
 # prints all the passwords stored in the system
 # does not decrypt any passwords, only prints identifiers
-    echo $(ls pass/ | sed -r -e "s%^pass/%%" -e "s%.[^.]+$%%")
+    echo $(ls pass/ | sed -r -e "s%^pass/%%" -e "s%.[^.]+$%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-users {
-    echo $(ls user/ | sed -r -e "s%^user/%%" -e "s%.[^.]+$%%")
+    echo $(ls user/ | sed -r -e "s%^user/%%" -e "s%.[^.]+$%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-groups {
-    echo $(ls group/ | sed -r -e "s%^group/%%" -e "s%.[^.]+$%%")
+    echo $(ls group/ | sed -r -e "s%^group/%%" -e "s%.[^.]+$%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-available {
@@ -179,7 +179,7 @@ function unmake-user-admin {
 # an error is returned if '$2' is 'admin', the user isn't an administrator, or '$1' is invalid
 
     [ "$uname" = "admin" ] && return 1
-    [ decrypt user/$uname.admin $admintoken > /dev/null ] || return 2
+    decrypt user/$uname.admin $admintoken > /dev/null || return 2
 
     rm group/admin.$uname
 }

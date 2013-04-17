@@ -15,6 +15,7 @@ SCRIPT=$0
 
 function assist {
     cat <<EOF
+
  $SCRIPT [-u <uname>] <command>
 
  <comamnd> := ""
@@ -47,14 +48,11 @@ function validate {
 }
 
 function validate-admin {
-    if ls user/admin.$UNAME 2>/dev/null
+    if ls group/admin.$UNAME 2>&1 >/dev/null
     then
-	read -sp "Password: " pass
-	echo
-	ATOKEN=$(decrypt user/admin.$UNAME $pass)
-	result=$?
-	unset pass
-	return $result
+	validate
+	ATOKEN=$(decrypt group/admin.$UNAME $UTOKEN)
+	return $?
     else
 	read -sp "Administrator password: " pass
 	echo
@@ -87,6 +85,8 @@ function menu {
                                           -e "^(promote|demote) $LEGAL_CHARS+$" 2>&1 >/dev/null
 		then
 		    execute $action
+		else
+		    assist
 		fi
 		;;
 	esac
@@ -120,10 +120,9 @@ function execute {
 		    return $?
 		    ;;
 	    esac
-	    name=$2
-	    regex=$3
+	    regex=$2
 	    
-	    list-$type $name | grep -E "$regex"
+	    echo $(list-$type | tr ' ' '\n' | grep -E "$regex")
 	    return 0
 	    ;;
 	
@@ -132,21 +131,25 @@ function execute {
 		user )
 		    name=$2
 		    
+		    echo
 		    echo "$name is in the following groups:"
 		    list-user-groups $name
 		    echo
 		    echo "$name can access the following passwords:"
 		    list-available $name
+		    echo
 		    return 0
 		    ;;
 		group )
 		    name=$2
 		    
+		    echo
 		    echo "$name has the following members:"
 		    list-group-users $name
 		    echo
 		    echo "$name contains the following passwords:"
 		    list-group-passes $name
+		    echo
 		    return 0
 		    ;;
 		pass )
@@ -211,13 +214,13 @@ function execute {
 	    ;;
 	promote )
 	    name=$1
-	    validate || return $?
+	    validate-admin || return $?
 	    make-user-admin $ATOKEN $name
 	    return $?
 	    ;;
 	demote )
 	    name=$1
-	    validate || return $?
+	    validate-admin || return $?
 	    unmake-user-admin $ATOKEN $name
 	    return $?
 	    ;;
