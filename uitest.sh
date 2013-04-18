@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-export PATH=$PATH:.
+PATH=$PATH:.
 
 (
 
@@ -9,6 +9,7 @@ export PATH=$PATH:.
     rm -rf pass
     rm -rf group
     rm -rf user
+    rm passfile
     echo "Done."
     
     echo "Bootstrapping..."
@@ -26,8 +27,12 @@ export PATH=$PATH:.
 	
 )
 
-echo "Adding user"
+make-token 2>/dev/null && echo "API functions still available, bailing." && exit 1
+
+# temp file for automation
 echo adminpass > passfile
+
+echo "Adding user"
 passman add user u1 < passfile
 passman list user
 
@@ -38,3 +43,13 @@ passman list group
 echo "Adding password"
 passman add pass p1 pass1 < passfile
 passman list pass
+
+echo "Mapping relations"
+passman manage group g1 +p1 < passfile
+passman manage user u1 +g1 < passfile
+passman info user u1
+passman info group g1
+passman info pass p1
+
+echo "Promoting u1"
+passman promote u1 < passfile

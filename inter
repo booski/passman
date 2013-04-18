@@ -6,5 +6,6 @@
       := list [user|group|pass] <regexfilter>?
       := info [user <uname>|group <gname>|pass <pname>]
       := manage [user <uname> [+|-]<gname>|group <gname> [+|-]<pname>]
-      := [add|del] [user <uname>|group <gname>|pass <pname>]
+      := add [user <uname> <upass>|group <gname>|pass <pname> <pvalue>]
+      := del [user <uname>|group <gname>|pass <pname>]
       := [promote|demote] <uname>

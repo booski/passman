@@ -23,7 +23,8 @@ function assist {
            := list [user|group|pass] <regexfilter>?
            := info [user <uname>|group <gname>|pass <pname>]
            := manage [user <uname> [+|-]<gname>|group <gname> [+|-]<pname>]
-           := [add|del] [user <uname>|group <gname>|pass <pname>]
+           := [add] [user <uname> <upass>|group <gname>|pass <pname> <pvalue>]
+           := [del] [user <uname>|group <gname>|pass <pname>]
            := [promote|demote] <uname>
 
  In interactive mode, any valid <command> string is allowed.
@@ -48,7 +49,7 @@ function validate {
 }
 
 function validate-admin {
-    if ls group/admin.$UNAME 2>&1 >/dev/null
+    if ls group/admin.$UNAME &>/dev/null
     then
 	validate
 	ATOKEN=$(decrypt group/admin.$UNAME $UTOKEN)
@@ -81,7 +82,9 @@ function menu {
                                           -e "^list (user|group|pass).*$" \
 	                                  -e "^info (user|group|pass) $LEGAL_CHARS+$" \
                                           -e "^manage (user|group) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
-                                          -e "^(add|del) (user|group|pass) $LEGAL_CHARS+$" \
+                                          -e "^add (user|pass) $LEGAL_CHARS+ $LEGAL_CHARS+$" \
+                                          -e "^add group $LEGAL_CHARS+$" \
+                                          -e "^del (user|group|pass) $LEGAL_CHARS+$" \
                                           -e "^(promote|demote) $LEGAL_CHARS+$" 2>&1 >/dev/null
 		then
 		    execute $action
@@ -202,14 +205,17 @@ function execute {
 	add|del )
 	    type=$1
 	    name=$2
-	    
-	    if [ "$action" = "del" ]
-	    then
-		action="remove"
-	    fi
+	    case "$action" in
+		add )
+		    [ ! "$type" = "group" ] && pass=$3
+		    ;;
+		del )
+		    action="remove"
+		    ;;
+	    esac
 	    
 	    validate-admin || return $?
-	    ${action}"-"$type $ATOKEN $name
+	    ${action}"-"$type $ATOKEN $name $pass
 	    return $?
 	    ;;
 	promote )
