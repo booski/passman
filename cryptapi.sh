@@ -1,5 +1,43 @@
 #!/bin/bash
 
+set -e
+
+function bootstrap {
+    fuser=$1
+    upass=$2
+# initializes passman into a usable state, using '$1' as its initial administrator
+# '$2' is the initial user's password
+# returns an error if any remnants of a working state are detected, in which case it does nothing
+
+    count=0
+    for i in user group pass
+    do
+	[ -e $i ] && (( count++ ))
+    done
+    
+    if [ "$count" = 0 ]
+    then
+	mkdir user
+	mkdir group
+	mkdir pass
+	utoken=$(make-token)
+	atoken=$(make-token)
+
+	encrypt user/$fuser $upass $utoken
+	encrypt group/admin.$fuser $utoken $atoken
+	encrypt user/$fuser.admin $atoken $utoken
+
+    elif [ "$count" = 3 ] && [ -e group/admin.* ]
+    then
+	echo "passman seems to be bootstrapped already, not doing anything."
+	return 1
+
+    else
+	echo "passman seems to be in an inconsistent state, please clean up before trying to bootstrap."
+	return 2
+    fi
+}
+
 function validate-user {
     uname=$1
     pass=$2
@@ -7,11 +45,17 @@ function validate-user {
 # user/'$1' with '$2'
 # if the decryption encounters an error, its error code is returned
     
-    token=$(decrypt user/$uname $pass)
-    res="$?"
+    decrypt user/$uname $pass
+}
 
-    echo $token
-    return $res
+function validate-admin {
+    uname=$1
+    pass=$2
+# prints the token associated with '$1' by decrypting the file
+# group/admin.'$1' with '$2'
+# if the decryption encounters an error, its error code is returned
+
+    decrypt group/admin.$uname $pass
 }
 
 function encrypt {
@@ -29,7 +73,7 @@ function encrypt {
     echo "$cont" > $name
 
     export pass
-    ccrypt -eq -S "" -E pass $name # 2>/dev/null
+    ccrypt -eq -S "" -E pass $name 2>/dev/null
 }
 
 function decrypt {
@@ -39,7 +83,7 @@ function decrypt {
 # if the decryption encounters an error, its error code is returned
     
     export pass
-    ccrypt -cq -E pass $name # 2>/dev/null
+    ccrypt -cq -E pass $name 2>/dev/null
 }
 
 function make-token {
@@ -52,7 +96,7 @@ function list-user-groups {
     uname=$1
 # prints all groups that '$1' belongs to as a space-delimited list
     
-    echo $(ls group/*.$uname | sed -r -e "s%^group/%%" -e "s%\.$uname$%%" | tr ' ' '\n' | sort -u)
+    echo $(ls group/*.$uname 2>/dev/null | sed -r -e "s%^group/%%" -e "s%\.$uname$%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-group-passes {
@@ -60,21 +104,21 @@ function list-group-passes {
 # prints all password files belonging to '$1' as a space-delimited list
 # does not decrypt any passwords
     
-    echo $(ls pass/*.$gname | sed -r -e "s%^pass/%%" -e "s%\.$gname$%%" | tr ' ' '\n' | sort -u)
+    echo $(ls pass/*.$gname 2>/dev/null | sed -r -e "s%^pass/%%" -e "s%\.$gname$%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-password-groups {
     pname=$1
 # prints all the groups that '$1' belongs to as a space-delimited list
     
-    echo $(ls pass/$pname.* | sed -r "s%^pass/$pname\.%%" | tr ' ' '\n' | sort -u)
+    echo $(ls pass/$pname.* 2>/dev/null | sed -r "s%^pass/$pname\.%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-group-users {
     gname=$1
 # prints all the users that belong to '$1' as a space-delimited list
 
-    echo $(ls group/$gname.* | sed -r "s%^group/$gname\.%%" | tr ' ' '\n' | sort -u)
+    echo $(ls group/$gname.* 2>/dev/null | sed -r "s%^group/$gname\.%%" | tr ' ' '\n' | sort -u)
 }
 
 function list-passwords {
@@ -146,27 +190,40 @@ function add-user {
     encrypt user/$uname $upass $utoken || return 3
 }
 
+function change-user-pass {
+    utoken=$1
+    uname=$2
+    newpass=$3
+# changes '$2's password to '$3', authenticating with '$1'
+# if the user does not belong to any groups, the password is changed without question
+# otherwise, the supplied '$1' is checked against one of the groups the user belongs to
+    
+    testfile=$(ls group/*.$uname 2>/dev/null | tr '\n' ' ' | cut -d' ' -f1)
+    [ -n "$testfile" ] && { decrypt $testfile $utoken &> /dev/null || return 1; }
+    rm user/$uname
+    encrypt user/$uname $newpass $utoken || return 2
+	
+}
+
 function remove-user {
     admintoken=$1
     uname=$2
 # removes '$2' from the system, given that '$1' is valid
 # also removes all group mappings for the user
-# returns an error if '$2' is 'admin', the user doesn't exist, or '$1' is invalid
+# returns an error if the user doesn't exist or '$1' is invalid
     
-    [ "$uname" = "admin" ] && return 1
-    [ decrypt user/$uname.admin $admintoken > /dev/null ] || return 2
+    decrypt user/$uname.admin $admintoken &> /dev/null|| return 2
 
     rm user/$uname*
-    rm group/*.$uname
+    rm group/*.$uname 2>/dev/null || true
 }
 
 function make-user-admin {
     admintoken=$1
     uname=$2
 # makes '$2' an administrator
-# an error will be returned if '$2' is 'admin' or '$1' is invalid
+# an error will be returned if '$1' is invalid
 
-    [ "$uname" = "admin" ] && return 1
     utoken=$(decrypt user/$uname.admin $admintoken) || return 2
 
     encrypt group/admin.$uname $utoken $admintoken
@@ -176,10 +233,9 @@ function unmake-user-admin {
     admintoken=$1
     uname=$2
 # revokes '$2's admin privileges
-# an error is returned if '$2' is 'admin', the user isn't an administrator, or '$1' is invalid
+# an error is returned if the user isn't an administrator or '$1' is invalid
 
-    [ "$uname" = "admin" ] && return 1
-    decrypt user/$uname.admin $admintoken > /dev/null || return 2
+    decrypt user/$uname.admin $admintoken &> /dev/null || return 2
 
     rm group/admin.$uname
 }
@@ -190,10 +246,9 @@ function map-user-group {
     gname=$3
 # adds '$2' to '$3'
 # admin privileges cannot be granted via this function
-# an error is returned if '$2' or '$3' is 'admin', '$2' already belongs to '$3', or '$1' is invalid
+# an error is returned if '$3' is 'admin', '$2' already belongs to '$3', or '$1' is invalid
 
     [ "$gname" = "admin" ] && return 1
-    [ "$uname" = "admin" ] && return 2
     [ -e group/$gname.$uname ] && return 3
     utoken=$(decrypt user/$uname.admin $admintoken) || return 4
     gtoken=$(decrypt group/$gname.admin $admintoken) || return 5
@@ -206,12 +261,11 @@ function unmap-user-group {
     uname=$2
     gname=$3
 # removes '$2' from '$3'
-# admin privileges cannot be revoked via this command
-# an error is returned if '$2' or '$3' is admin, the mapping doesn't exist, or '$1' is invalid
+# admin privileges cannot be revoked via this function
+# an error is returned if '$3' is admin, the mapping doesn't exist, or '$1' is invalid
 
-    [ "$uname" = "admin" ] && return 1
     [ "$gname" = "admin" ] && return 2
-    [ decrypt group/$gname.admin $admintoken > /dev/null ] || return 3
+    decrypt group/$gname.admin $admintoken &> /dev/null || return 3
     
     rm group/$gname.$uname
 }
@@ -237,9 +291,9 @@ function remove-group {
 # an error is returned if '$2' is 'admin', '$2' doesn't exist, or '$1' is invalid
 
     [ "$gname" = "admin" ] && return 1
-    [ decrypt group/$gname.admin $admintoken > /dev/null ] || return 2
+    decrypt group/$gname.admin $admintoken &> /dev/null || return 2
 
-    rm pass/*.$gname
+    rm pass/*.$gname 2>/dev/null || true
     rm group/$gname.*
 }
 
@@ -266,8 +320,8 @@ function unmap-group-pass {
 # returns an error if '$2' or '$3' is 'admin', the mapping doesn't exist, or '$1' is invalid
 
     [ "$gname" = "admin" ] && return 1
-    [ decrypt pass/$pname.admin $admintoken > /dev/null ] || return 2
-    [ decrypt group/$gname.admin $admintoken > /dev/null ] || return 3
+    decrypt pass/$pname.admin $admintoken &> /dev/null || return 2
+    decrypt group/$gname.admin $admintoken &> /dev/null || return 3
 
     rm pass/$pname.$gname
 }
@@ -288,7 +342,7 @@ function remove-pass {
 # removes the password named '$2' from the system
 # an error is returned if '$1' is invalid or '$2' doesn't exist
 
-    [ decrypt pass/$pname.admin $admintoken > /dev/null ] || return 2
+    decrypt pass/$pname.admin $admintoken &> /dev/null || return 2
 
     rm pass/$pname.*
 }
