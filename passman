@@ -20,6 +20,7 @@ function assist {
 
  <comamnd> := ""
            := get <pname>
+           := passwd
            := list [user|group|pass] <regexfilter>?
            := info [user <uname>|group <gname>|pass <pname>]
            := manage [user <uname> [+|-]<gname>|group <gname> [+|-]<pname>]
@@ -39,29 +40,23 @@ function validate {
     fi
     if [ -z "$UTOKEN" ]
     then
-	read -sp "Password: " pass
+	read -sp "Password: " pw
 	echo
-	UTOKEN=$(decrypt user/$UNAME $pass) || UTOKEN=""
+	UTOKEN=$(decrypt user/$UNAME $pw)
 	result=$?
-	unset pass
+	unset pw
 	return $result
     fi
 }
 
 function validate-admin {
-    if ls group/admin.$UNAME &>/dev/null
+    validate
+    if [ -z $ATOKEN ]
     then
-	validate
 	ATOKEN=$(decrypt group/admin.$UNAME $UTOKEN)
-	return $?
-    else
-	read -sp "Administrator password: " pass
-	echo
-	ATOKEN=$(decrypt user/admin $pass)
-	result=$?
-	unset pass
-	return $result
     fi
+    return $?
+
 }
 
 function menu {
@@ -78,33 +73,36 @@ function menu {
 		assist
 		;;
 	    * )
-		if echo $action | grep -E -e "^get $LEGAL_CHARS+$" \
-                                          -e "^list (user|group|pass).*$" \
-	                                  -e "^info (user|group|pass) $LEGAL_CHARS+$" \
-                                          -e "^manage (user|group) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
-                                          -e "^add (user|pass) $LEGAL_CHARS+ $LEGAL_CHARS+$" \
-                                          -e "^add group $LEGAL_CHARS+$" \
-                                          -e "^del (user|group|pass) $LEGAL_CHARS+$" \
-                                          -e "^(promote|demote) $LEGAL_CHARS+$" 2>&1 >/dev/null
-		then
-		    execute $action
-		else
-		    assist
-		fi
+		execute $action
 		;;
 	esac
     done
 }
 
 function execute {
+    if ! echo "$*" | grep -E \
+	-e "^get $LEGAL_CHARS+$" \
+	-e "^passwd$" \
+        -e "^list (user|group|pass).*$" \
+	-e "^info (user|group|pass) $LEGAL_CHARS+$" \
+        -e "^manage (user|group) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
+        -e "^add (user|pass) $LEGAL_CHARS+ $LEGAL_CHARS+$" \
+        -e "^add group $LEGAL_CHARS+$" \
+        -e "^del (user|group|pass) $LEGAL_CHARS+$" \
+        -e "^(promote|demote) $LEGAL_CHARS+$" 2>&1 >/dev/null
+    then
+	assist
+	return 1
+    fi
+    
     action=$1
     shift
-    
+
     case "$action" in
 	get )
 	    validate
 	    show-pass $UNAME $UTOKEN "$1" || echo "$UNAME cannot access $1."
-	    return $?
+	    return 0
 	    ;;
 	list )
 	    type=""
@@ -171,8 +169,8 @@ function execute {
 	manage )
 	    type=$1
 	    name=$2
-	    action=$(echo $3 | grep -o ^.)
-	    member=$(echo $3 | sed -rn "s/.(.+)/\1/p")
+	    action=${3:0:1}
+	    member=${3:1}
 	    
 	    case "$type" in
 		user )
@@ -206,17 +204,27 @@ function execute {
 	    type=$1
 	    name=$2
 	    case "$action" in
-		add )
+		"add" )
 		    [ ! "$type" = "group" ] && pass=$3
 		    ;;
-		del )
+		"del" )
 		    action="remove"
 		    ;;
 	    esac
-	    
+
 	    validate-admin || return $?
 	    ${action}"-"$type $ATOKEN $name $pass
 	    return $?
+	    ;;
+	passwd )
+	    validate
+	    read -sp "New password: " pw1
+	    read -sp "Retype password: " pw2
+	    [ "$pw1" = "$pw2" ] && change-user-pass $UTOKEN $UNAME $pw1
+	    result=$?
+	    unset pw1
+	    unset pw2
+	    return $result
 	    ;;
 	promote )
 	    name=$1
