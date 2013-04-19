@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+cd ~passman
 
 API="cryptapi.sh"
 LEGAL_CHARS="[[:alnum:]_-]"
