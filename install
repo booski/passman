@@ -15,7 +15,6 @@ BINNAME=passman
 ###################### Installer follows, do not edit ######################
 
 set -e
-. settings
 
 [ ! "$(id -u)" = 0 ] && {
     echo "You must be root to install this application."
@@ -38,15 +37,17 @@ ls $APPHOME/* &>/dev/null && {
 }
 
 read -p "Initial administrator: " iuser
-read -ps "${iuser}'s password: " pw1
-read -ps "Retype password: " pw2
+read -sp "${iuser}'s password: " pw1
+echo
+read -sp "Retype password: " pw2
+echo
 
-[ "$pw1" = "$pw2" ] && {
+[ "$pw1" = "$pw2" ] || {
     echo "Passwords do not match, please try again."
     exit 5
 }
 
-useradd -rUN -d $APPHOME -s /bin/false $APPNAME
+useradd -rN -d $APPHOME -s /bin/false $APPNAME
 mkdir $APPHOME
 rm -rf $APPHOME/*
 git clone git://github.com/booski/passman.git $APPHOME
@@ -55,8 +56,9 @@ APPNAME=$APPNAME
 APPHOME=$APPHOME
 EOF
 chown -R passman $APPHOME
+chmod -R u=rwX,g=rX,o=rX $APPHOME
 chmod u+sx $APPHOME/passman
-ln -s /usr/local/bin/passman $APPHOME/passman
+ln -s /usr/local/bin/$BINNAME $APPHOME/passman
 
 (
     cd ~$APPNAME
