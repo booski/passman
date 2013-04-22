@@ -59,7 +59,7 @@ chmod u+sx $APPHOME/passman
 ln -s $APPHOME/passman /usr/local/bin/$BINNAME
 
 (
-    cd ~$APPNAME
+    cd $APPHOME
     . cryptapi.sh
     bootstrap $iuser $pw1
 )
