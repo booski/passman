@@ -1,24 +1,21 @@
 #!/bin/bash
 
+set -e
+
 # Import functions
 . cryptapi.sh
 
 echo "########################## STARTING ##########################"
 
 echo "Cleaning up..."
-rm -rf user/*
-rm -rf group/*
-rm -rf pass/*
+rm -rf user
+rm -rf group
+rm -rf pass
 echo "done."
 
 echo "Bootstrapping..."
-mkdir user
-mkdir group
-mkdir pass
-token=$(make-token) || exit $?
-encrypt user/admin adminpass $token || exit $?
-admintoken=$(validate-user admin adminpass) || exit $?
-[ $token = $admintoken ] || exit $?
+bootstrap ua uapass
+admintoken=$(validate-admin ua $(validate-user ua uapass))
 echo "done."
 
 echo "Creating passwords..."

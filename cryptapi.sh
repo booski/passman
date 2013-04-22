@@ -15,27 +15,28 @@ function bootstrap {
 	[ -e $i ] && (( count++ ))
     done
     
-    if [ "$count" = 0 ]
-    then
-	mkdir user
-	mkdir group
-	mkdir pass
-	utoken=$(make-token)
-	atoken=$(make-token)
-
-	encrypt user/$fuser $upass $utoken
-	encrypt group/admin.$fuser $utoken $atoken
-	encrypt user/$fuser.admin $atoken $utoken
-
-    elif [ "$count" = 3 ] && [ -e group/admin.* ]
+    if [ "$count" = 3 ] && [ -e group/admin.* ]
     then
 	echo "passman seems to be bootstrapped already, not doing anything."
 	return 1
 
-    else
+    elif [ ! "$count" = 0 ]
+    then
 	echo "passman seems to be in an inconsistent state, please clean up before trying to bootstrap."
 	return 2
     fi
+
+    mkdir user
+    mkdir group
+    mkdir pass
+    utoken=$(make-token)
+    atoken=$(make-token)
+
+    encrypt user/$fuser $upass $utoken
+    encrypt group/admin.$fuser $utoken $atoken
+    encrypt user/$fuser.admin $atoken $utoken
+
+
 }
 
 function validate-user {
