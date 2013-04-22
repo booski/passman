@@ -48,8 +48,6 @@ echo
 }
 
 useradd -rN -d $APPHOME -s /bin/false $APPNAME
-mkdir $APPHOME
-rm -rf $APPHOME/*
 git clone git://github.com/booski/passman.git $APPHOME
 cat<<EOF > $APPHOME/settings
 APPNAME=$APPNAME
@@ -58,7 +56,7 @@ EOF
 chown -R passman $APPHOME
 chmod -R u=rwX,g=rX,o=rX $APPHOME
 chmod u+sx $APPHOME/passman
-ln -s /usr/local/bin/$BINNAME $APPHOME/passman
+ln -s $APPHOME/passman /usr/local/bin/$BINNAME
 
 (
     cd ~$APPNAME
