@@ -1,5 +1,11 @@
 #!/bin/bash
 
+UNAME=passman
+BASE_DIR=/opt/passman
+BINNAME=passman
+
+###################### Installer follows, do not edit ######################
+
 set -e
 . settings
 
@@ -8,7 +14,7 @@ set -e
     return 1
 }
 
-grep -q ^$UNAME &>/dev/null && {
+id $UNAME &>/dev/null && {
     echo "The user '$UNAME' already exists, please choose a different username."
     return 2
 }
@@ -18,21 +24,29 @@ ls $BASE_DIR/* &>/dev/null && {
     return 3
 }
 
+[ -e /usr/local/bin/$BINNAME ] && {
+    echo "/usr/local/bin/$BINNAME already exists, please choose a different name."
+    return 4
+}
+
 read -p "Initial administrator: " iuser
 read -ps "${iuser}'s password: " pw1
 read -ps "Retype password: " pw2
 
 [ $pw1 = $pw2 ] && {
     echo "Passwords do not match, please try again."
-    return 4
+    return 5
 }
 
-useradd -d $BASE_DIR -r -s /bin/false $UNAME
+useradd -rUN -d $BASE_DIR -s /bin/false $UNAME
 mkdir $BASE_DIR
 rm -rf $BASE_DIR/*
 git clone git://github.com/booski/passman.git $BASE_DIR
-cp settings $BASE_DIR
-chown -R passman:passman $BASE_DIR
+cat<<EOF > $BASE_DIR/settings
+UNAME=$UNAME
+BASE_DIR=$BASE_DIR
+EOF
+chown -R passman $BASE_DIR
 chmod u+sx $BASE_DIR/passman
 ln -s /usr/local/bin/passman $BASE_DIR/passman
 
