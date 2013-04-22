@@ -1,8 +1,16 @@
 #!/bin/bash
 
+# The name of the user that the application will run as.
 APPNAME=passman
+
+# The directory that the application will be installed in.
 APPHOME=/opt/passman
+
+# The name under which the application will be symlinked in /usr/local/bin.
 BINNAME=passman
+
+# All of the values chosen above must be free for installation to proceed.
+
 
 ###################### Installer follows, do not edit ######################
 
@@ -11,31 +19,31 @@ set -e
 
 [ ! "$(id -u)" = 0 ] && {
     echo "You must be root to install this application."
-    return 1
+    exit 1
 }
 
 id $APPNAME &>/dev/null && {
     echo "The user '$APPNAME' already exists, please choose a different username."
-    return 2
+    exit 2
 }
 
 ls $APPHOME/* &>/dev/null && {
     echo "'$APPHOME' is not empty, please choose a different installation folder."
-    return 3
+    exit 3
 }
 
 [ -e /usr/local/bin/$BINNAME ] && {
     echo "/usr/local/bin/$BINNAME already exists, please choose a different name."
-    return 4
+    exit 4
 }
 
 read -p "Initial administrator: " iuser
 read -ps "${iuser}'s password: " pw1
 read -ps "Retype password: " pw2
 
-[ $pw1 = $pw2 ] && {
+[ "$pw1" = "$pw2" ] && {
     echo "Passwords do not match, please try again."
-    return 5
+    exit 5
 }
 
 useradd -rUN -d $APPHOME -s /bin/false $APPNAME
