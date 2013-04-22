@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -e
+. settings
+
+[ ! "$(id -u)" = 0 ] && {
+    echo "You must be root to install this application."
+    return 1
+}
+
+grep -q ^$UNAME &>/dev/null && {
+    echo "The user '$UNAME' already exists, please choose a different username."
+    return 2
+}
+
+ls $BASE_DIR/* &>/dev/null && {
+    echo "'$BASE_DIR' is not empty, please choose a different installation folder."
+    return 3
+}
+
+read -p "Initial administrator: " iuser
+read -ps "${iuser}'s password: " pw1
+read -ps "Retype password: " pw2
+
+[ $pw1 = $pw2 ] && {
+    echo "Passwords do not match, please try again."
+    return 4
+}
+
+useradd -d $BASE_DIR -r -s /bin/false $UNAME
+mkdir $BASE_DIR
+rm -rf $BASE_DIR/*
+git clone git://github.com/booski/passman.git $BASE_DIR
+cp settings $BASE_DIR
+chown -R passman:passman $BASE_DIR
+chmod u+sx $BASE_DIR/passman
+ln -s /usr/local/bin/passman $BASE_DIR/passman
+
+(
+    cd ~$UNAME
+    . cryptapi.sh
+    bootstrap $iuser $pw1
+)
