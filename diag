@@ -19,13 +19,11 @@
   type/contentname.keyname : key -> contents
 
   pass/<pname>.<gname> : <gtoken> -> <pass>
-  pass/<pname>.admin : <mtoken> -> <pass>
+  pass/<pname>.admin : <atoken> -> <pass>
   
   group/<gname>.<uname> : <utoken> -> <gtoken>
-  group/<gname>.admin : <mtoken> -> <gtoken>
-  group/admin.<uname> : <utoken> -> <mtoken>
+  group/<gname>.admin : <atoken> -> <gtoken>
+  group/admin.<uname> : <utoken> -> <atoken>
   
   user/<uname> : <upass> -> <utoken>
-  user/<uname>.admin : <mtoken> -> <utoken>
-
-  user/master : <mpass> -> <mtoken>
+  user/<uname>.admin : <atoken> -> <utoken>
