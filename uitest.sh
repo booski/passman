@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "This test is outdated and does not work."
+exit 1
+
 set -e
 PATH=$PATH:.
 
