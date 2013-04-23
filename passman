@@ -247,7 +247,9 @@ function execute {
 	passwd )
 	    validate
 	    read -sp "New password: " pw1
+	    echo
 	    read -sp "Retype password: " pw2
+	    echo
 	    [ "$pw1" = "$pw2" ] && change-user-pass $UTOKEN $UNAME $pw1
 	    result=$?
 	    unset pw1
