@@ -19,19 +19,24 @@ BINNAME=passman
 
 set -e
 
+function die {
+    echo "No changes have been made to the system."
+    exit $1
+}
+
 [ ! "$(id -u)" = 0 ] && {
     echo "You must be root to install this application."
-    exit 1
+    die 1
 }
 
 ls $APPHOME/* &>/dev/null && {
     echo "'$APPHOME' is not empty, please choose a different installation folder."
-    exit 2
+    die 2
 }
 
 [ -e /usr/local/bin/$BINNAME ] && {
     echo "/usr/local/bin/$BINNAME already exists, please choose a different name."
-    exit 3
+    die 3
 }
 
 read -p "Initial administrator: " iuser
@@ -42,7 +47,7 @@ echo
 
 [ "$pw1" = "$pw2" ] || {
     echo "Passwords do not match, please try again."
-    exit 4
+    die 4
 }
 
 cp /etc/sudoers /etc/sudoers.tmp
@@ -50,8 +55,8 @@ chmod 640 /etc/sudoers.tmp
 echo "%$APPGROUP ALL=($APPUSER) NOPASSWD: $APPHOME/passman" >> /etc/sudoers.tmp
 visudo -cf /etc/sudoers.tmp || {
     echo "Failed to update sudoers file, aborting."
-#    rm /etc/sudoers.tmp
-    exit 5
+    rm /etc/sudoers.tmp
+    die 5
 }
 
 chmod 440 /etc/sudoers.tmp
@@ -60,6 +65,7 @@ mv /etc/sudoers.tmp /etc/sudoers
 useradd -rN -d $APPHOME -s /bin/false $APPUSER
 git clone git://github.com/booski/passman.git $APPHOME
 ln -s $APPHOME/passman /usr/local/bin/$BINNAME
+echo "test"
 
 (
     cd $APPHOME
