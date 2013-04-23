@@ -50,7 +50,7 @@ function validate {
 	read -sp "Password: " pw
 	echo
 	UTOKEN=$(decrypt user/$UNAME $pw)
-	result=$?
+	local result=$?
 	unset pw
 	return $result
     fi
@@ -67,6 +67,7 @@ function validate-admin {
 }
 
 function menu {
+    local action=""
     while true
     do
 	echo -n "passman> "
