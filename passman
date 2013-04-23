@@ -241,7 +241,7 @@ function execute {
 	    esac
 
 	    validate-admin || return $?
-	    ${action}"-"$type $ATOKEN $name $pass
+	    ${action}"-"$type $ATOKEN $name "$pass"
 	    return $?
 	    ;;
 	passwd )
