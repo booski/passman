@@ -50,7 +50,7 @@ chmod 640 /etc/sudoers.tmp
 echo "%$APPGROUP ALL=($APPNAME) NOPASSWD: $APPHOME/passman" >> /etc/sudoers.tmp
 visudo -cf /etc/sudoers.tmp || {
     echo "Failed to update sudoers file, aborting."
-    rm /etc/sudoers.tmp
+#    rm /etc/sudoers.tmp
     exit 5
 }
 
