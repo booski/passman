@@ -31,7 +31,7 @@ function assist {
            := list [user|group|pass] <regexfilter>?
            := info [user <uname>|group <gname>|pass <pname>]
            := manage [user <uname> [+|-]<gname>|group <gname> [+|-]<pname>]
-           := [add] [user <uname> <upass>|group <gname>|pass <pname> <pvalue>]
+           := [add] [user <uname>|group <gname>|pass <pname>]
            := [del] [user <uname>|group <gname>|pass <pname>]
            := [promote|demote] <uname>
 
@@ -93,8 +93,7 @@ function execute {
         -e "^list (user|group|pass).*$" \
 	-e "^info (user|group|pass) $LEGAL_CHARS+$" \
         -e "^manage (user|group) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
-        -e "^add (user|pass) $LEGAL_CHARS+ $LEGAL_CHARS+$" \
-        -e "^add group $LEGAL_CHARS+$" \
+        -e "^add (user|group|pass) $LEGAL_CHARS+$" \
         -e "^del (user|group|pass) $LEGAL_CHARS+$" \
         -e "^(promote|demote) $LEGAL_CHARS+$" 2>&1 >/dev/null
     then
@@ -212,7 +211,22 @@ function execute {
 	    name=$2
 	    case "$action" in
 		"add" )
-		    [ ! "$type" = "group" ] && pass=$3
+		    case "$type" in
+			user )
+			    read -sp "Choose a password: " pass1
+			    read -sp "Retype password: " pass2
+			    if [ "$pass1" = "$pass2" ]
+			    then
+				pass=$pass1
+			    else
+				echo "Passwords do not match. User not added."
+				return 1
+			    ;;
+			pass )
+			    read -d $(echo -e '\e') \
+				 -p "$(echo -e "Enter the password data you want to save.\nEnd input by pressing ESC.\n")" pass
+			    ;;
+			
 		    ;;
 		"del" )
 		    action="remove"
