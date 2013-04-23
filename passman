@@ -137,6 +137,7 @@ function execute {
 	    esac
 	    local regex=$2
 	    
+	    echo $type
 	    echo $(list-$type | tr ' ' '\n' | grep -E "$regex")
 	    return 0
 	    ;;
