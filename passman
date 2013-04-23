@@ -221,12 +221,16 @@ function execute {
 			    else
 				echo "Passwords do not match. User not added."
 				return 1
+			    fi
 			    ;;
 			pass )
 			    read -d $(echo -e '\e') \
 				 -p "$(echo -e "Enter the password data you want to save.\nEnd input by pressing ESC.\n")" pass
 			    ;;
-			
+			group )
+			    pass=""
+			    ;;
+		    esac
 		    ;;
 		"del" )
 		    action="remove"
