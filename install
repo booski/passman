@@ -20,23 +20,21 @@ BINNAME=passman
 set -e
 
 function die {
+    echo "$1"
     echo "No changes have been made to the system."
-    exit $1
+    exit $2
 }
 
 [ ! "$(id -u)" = 0 ] && {
-    echo "You must be root to install this application."
-    die 1
+    die "You must be root to install this application." 1
 }
 
 ls $APPHOME/* &>/dev/null && {
-    echo "'$APPHOME' is not empty, please choose a different installation folder."
-    die 2
+    die "'$APPHOME' is not empty, please choose a different installation folder." 2
 }
 
 [ -e /usr/local/bin/$BINNAME ] && {
-    echo "/usr/local/bin/$BINNAME already exists, please choose a different name."
-    die 3
+    die "/usr/local/bin/$BINNAME already exists, please choose a different name." 3
 }
 
 read -p "Initial administrator: " iuser
@@ -46,17 +44,15 @@ read -sp "Retype password: " pw2
 echo
 
 [ "$pw1" = "$pw2" ] || {
-    echo "Passwords do not match, please try again."
-    die 4
+    die "Passwords do not match, please try again." 4
 }
 
 cp /etc/sudoers /etc/sudoers.tmp
 chmod 640 /etc/sudoers.tmp
 echo "%$APPGROUP ALL=($APPUSER) NOPASSWD: $APPHOME/passman" >> /etc/sudoers.tmp
 visudo -cf /etc/sudoers.tmp || {
-    echo "Failed to update sudoers file, aborting."
     rm /etc/sudoers.tmp
-    die 5
+    die "Failed to update sudoers file, aborting." 5
 }
 
 chmod 440 /etc/sudoers.tmp
