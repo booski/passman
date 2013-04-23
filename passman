@@ -3,8 +3,9 @@
 set -e
 
 realbin=$(readlink -f $0)
+shift
 [ ! "$(id -un)" = "passman" ] && {
-    exec sudo -u passman $realbin
+    exec sudo -u passman $realbin $@
 }
 
 cd $(dirname $realbin)
