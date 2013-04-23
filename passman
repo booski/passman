@@ -2,14 +2,12 @@
 
 set -e
 
-
-# TODO: kolla så att passman har rätt rad i sudoers innan.
-
+realbin=$(readlink -f $0)
 [ ! "$(id -un)" = "passman" ] && {
-    exec sudo -u passman /opt/passman/passman
+    exec sudo -u passman $realbin
 }
 
-cd $(dirname $(readlink -f $0))
+cd $(dirname $realbin)
 
 API="cryptapi.sh"
 LEGAL_CHARS="[[:alnum:]_-]"
