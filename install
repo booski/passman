@@ -33,7 +33,7 @@ ls $APPHOME/* &>/dev/null && {
     die "'$APPHOME' is not empty, please choose a different installation folder." 2
 }
 
-[ -e /usr/local/bin/$BINNAME ] && {
+[ -h /usr/local/bin/$BINNAME ] && {
     die "/usr/local/bin/$BINNAME already exists, please choose a different name." 3
 }
 
