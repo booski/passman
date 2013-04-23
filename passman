@@ -88,6 +88,7 @@ function menu {
 
 function execute {
     if ! echo "$*" | grep -E \
+	-e "^$" \
 	-e "^get $LEGAL_CHARS+$" \
 	-e "^passwd$" \
         -e "^list (user|group|pass).*$" \
@@ -214,7 +215,9 @@ function execute {
 		    case "$type" in
 			user )
 			    read -sp "Choose a password: " pass1
+			    echo
 			    read -sp "Retype password: " pass2
+			    echo
 			    if [ "$pass1" = "$pass2" ]
 			    then
 				pass=$pass1
