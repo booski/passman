@@ -143,6 +143,7 @@ function list-available {
 
     groups=$(list-user-groups $uname)
     
+    passes=""
     for gname in $groups
     do
 	passes=$passes" "$(list-group-passes $gname)
