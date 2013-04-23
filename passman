@@ -43,7 +43,7 @@ EOF
 function validate {
     if [ -z "$UNAME" ]
     then
-	read -p "Username: " UNAME
+	read -p "Authenticate as user: " UNAME
     fi
     if [ -z "$UTOKEN" ]
     then
