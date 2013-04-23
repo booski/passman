@@ -4,7 +4,7 @@ set -e
 
 [ ! "$(id -u)" = "passman" ] && {
     echo "Changing user to passman"
-    exec sudo -u passman "$@"
+    exec sudo -u passman /opt/passman/passman
 }
 
 cd $(dirname $(readlink -f $0))
