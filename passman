@@ -81,7 +81,6 @@ function menu {
 		assist
 		;;
 	    * )
-		echo "Executing '$action'"
 		execute $action || true
 		;;
 	esac
@@ -109,12 +108,10 @@ function execute {
 
     local type=""
     local name=""
-    local action=""
     local member=""
     local pass=""
     local result=""
 
-    echo "$action"
     case "$action" in
 	get )
 	    validate
@@ -122,7 +119,6 @@ function execute {
 	    return 1
 	    ;;
 	list )
-	    echo "arg: $1"
 	    type=""
 	    case "$1" in
 		user )
@@ -141,7 +137,6 @@ function execute {
 	    esac
 	    local regex=$2
 	    
-	    echo "$type"
 	    echo $(list-$type | tr ' ' '\n' | grep -E "$regex")
 	    return 0
 	    ;;
