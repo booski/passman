@@ -61,7 +61,6 @@ mv /etc/sudoers.tmp /etc/sudoers
 useradd -rN -d $APPHOME -s /bin/false $APPUSER
 git clone git://github.com/booski/passman.git $APPHOME
 ln -s $APPHOME/passman /usr/local/bin/$BINNAME
-echo "test"
 
 (
     cd $APPHOME
