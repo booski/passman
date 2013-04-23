@@ -2,7 +2,7 @@
 
 set -e
 
-[ ! "$(id -u)" = "passman" ] && {
+[ ! "$(id -un)" = "passman" ] && {
     echo "Changing user to passman"
     exec sudo -u passman /opt/passman/passman
 }
