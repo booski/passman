@@ -239,7 +239,9 @@ function execute {
 		    action="remove"
 		    ;;
 	    esac
-
+	    
+	    echo -e "$pass"
+	    
 	    validate-admin || return $?
 	    ${action}"-"$type $ATOKEN $name "$pass"
 	    return $?
