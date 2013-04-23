@@ -114,6 +114,7 @@ function execute {
     local pass=""
     local result=""
 
+    echo "$action"
     case "$action" in
 	get )
 	    validate
@@ -121,6 +122,7 @@ function execute {
 	    return 1
 	    ;;
 	list )
+	    echo "arg: $1"
 	    type=""
 	    case "$1" in
 		user )
@@ -139,7 +141,7 @@ function execute {
 	    esac
 	    local regex=$2
 	    
-	    echo $type
+	    echo "$type"
 	    echo $(list-$type | tr ' ' '\n' | grep -E "$regex")
 	    return 0
 	    ;;
