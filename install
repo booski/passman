@@ -47,16 +47,15 @@ echo
     die "Passwords do not match, please try again." 4
 }
 
-cp /etc/sudoers /etc/sudoers.tmp
-chmod 640 /etc/sudoers.tmp
-echo "%$APPGROUP ALL=($APPUSER) NOPASSWD: $APPHOME/passman" >> /etc/sudoers.tmp
-visudo -cf /etc/sudoers.tmp || {
+
+[ -e /etc/sudoers.d/${APPGROUP}"-"$BINNAME ] && {
     rm /etc/sudoers.tmp
-    die "Failed to update sudoers file, aborting." 5
+    die "There is already a file /etc/sudoers.d/${APPGROUP}-$BINNAME, please choose a different name" 5
 }
 
-chmod 440 /etc/sudoers.tmp
-mv /etc/sudoers.tmp /etc/sudoers
+touch /etc/sudoers.d/${APPGROUP}"-"$BINNAME
+echo "%$APPGROUP ALL=($APPUSER) NOPASSWD: $APPHOME/passman" > /etc/sudoers.d/${APPGROUP}"-"$BINNAME
+chmod 440 /etc/sudoers.d/${APPGROUP}"-"$BINNAME
 
 useradd -rN -d $APPHOME -s /bin/false $APPUSER
 git clone git://github.com/booski/passman.git $APPHOME
