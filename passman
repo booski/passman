@@ -81,6 +81,7 @@ function menu {
 		assist
 		;;
 	    * )
+		echo "Executing '$action'"
 		execute $action || true
 		;;
 	esac
