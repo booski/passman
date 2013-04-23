@@ -328,9 +328,9 @@ function unmap-group-pass {
 }
 
 function add-pass {
-    admintoken=$1
-    pname=$2
-    pass=$3
+    admintoken="$1"
+    pname="$2"
+    pass="$3"
 # adds a password to the system. It is identified by '$2', and its value is '$3'
 # an error is returned if '$1' is invalid or '$2' already exists
 
