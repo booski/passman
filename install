@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# The name of the user that the application will run as.
-APPNAME=passman
-
 # The directory that the application will be installed in.
 APPHOME=/opt/passman
 
@@ -21,19 +18,14 @@ set -e
     exit 1
 }
 
-id $APPNAME &>/dev/null && {
-    echo "The user '$APPNAME' already exists, please choose a different username."
-    exit 2
-}
-
 ls $APPHOME/* &>/dev/null && {
     echo "'$APPHOME' is not empty, please choose a different installation folder."
-    exit 3
+    exit 2
 }
 
 [ -e /usr/local/bin/$BINNAME ] && {
     echo "/usr/local/bin/$BINNAME already exists, please choose a different name."
-    exit 4
+    exit 3
 }
 
 read -p "Initial administrator: " iuser
@@ -44,15 +36,10 @@ echo
 
 [ "$pw1" = "$pw2" ] || {
     echo "Passwords do not match, please try again."
-    exit 5
+    exit 4
 }
 
-useradd -rN -d $APPHOME -s /bin/false $APPNAME
 git clone git://github.com/booski/passman.git $APPHOME
-cat<<EOF > $APPHOME/settings
-APPNAME=$APPNAME
-APPHOME=$APPHOME
-EOF
 chown -R passman $APPHOME
 chmod -R u=rwX,g=rX,o=rX $APPHOME
 chmod u+sx $APPHOME/passman

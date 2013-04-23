@@ -2,8 +2,12 @@
 
 set -e
 
-. settings
-cd ~$APPHOME
+[ ! "$(id -u)" = "passman" ] && {
+    echo "Changing user to passman"
+    exec sudo -u passman $@
+}
+
+cd $(dirname $(readlink -f $0))
 
 API="cryptapi.sh"
 LEGAL_CHARS="[[:alnum:]_-]"
