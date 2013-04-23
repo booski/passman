@@ -2,8 +2,10 @@
 
 set -e
 
+
+# TODO: kolla så att passman har rätt rad i sudoers innan.
+
 [ ! "$(id -un)" = "passman" ] && {
-    echo "Changing user to passman"
     exec sudo -u passman /opt/passman/passman
 }
 
