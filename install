@@ -47,7 +47,7 @@ echo
 
 cp /etc/sudoers /etc/sudoers.tmp
 chmod 640 /etc/sudoers.tmp
-echo "%$APPGROUP ALL=($APPNAME) NOPASSWD: $APPHOME/passman" >> /etc/sudoers.tmp
+echo "%$APPGROUP ALL=($APPUSER) NOPASSWD: $APPHOME/passman" >> /etc/sudoers.tmp
 visudo -cf /etc/sudoers.tmp || {
     echo "Failed to update sudoers file, aborting."
 #    rm /etc/sudoers.tmp
@@ -57,7 +57,7 @@ visudo -cf /etc/sudoers.tmp || {
 chmod 440 /etc/sudoers.tmp
 mv /etc/sudoers.tmp /etc/sudoers
 
-useradd -rN -d $APPHOME -s /bin/false $APPNAME
+useradd -rN -d $APPHOME -s /bin/false $APPUSER
 git clone git://github.com/booski/passman.git $APPHOME
 ln -s $APPHOME/passman /usr/local/bin/$BINNAME
 
@@ -67,5 +67,5 @@ ln -s $APPHOME/passman /usr/local/bin/$BINNAME
     bootstrap $iuser $pw1
 )
 
-chown -R $APPNAME $APPHOME
+chown -R $APPUSER $APPHOME
 chmod -R u=rwX,g=rX,o=rX $APPHOME
