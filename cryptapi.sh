@@ -71,7 +71,7 @@ function encrypt {
 
     touch $name
     chmod 600 $name
-    echo "$cont" > $name
+    echo -e "$cont" > $name
 
     export pass
     ccrypt -eq -S "" -E pass $name 2>/dev/null
