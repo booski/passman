@@ -1,12 +1,18 @@
 #!/bin/bash
 
+# The user that passman will run as. The user must not exist prior to running this script.
+APPUSER=passman
+
+# The system group that users must belong to to be able to run this application. 
+# Will not be created or validated by this installer.
+APPGROUP=dmc
+
 # The directory that the application will be installed in.
+# The directory does not have to exist, but it must be empty if it does.
 APPHOME=/opt/passman
 
 # The name under which the application will be symlinked in /usr/local/bin.
 BINNAME=passman
-
-# All of the values chosen above must be free for installation to proceed.
 
 
 ###################### Installer follows, do not edit ######################
@@ -39,10 +45,20 @@ echo
     exit 4
 }
 
+cp /etc/sudoers /etc/sudoers.tmp
+chmod 640 /etc/sudoers.tmp
+echo "%$APPGROUP ALL=($APPNAME) NOPASSWD: $APPHOME/passman" >> /etc/sudoers.tmp
+visudo -cf /etc/sudoers.tmp || {
+    echo "Failed to update sudoers file, aborting."
+    rm /etc/sudoers.tmp
+    exit 5
+}
+
+chmod 440 /etc/sudoers.tmp
+mv /etc/sudoers.tmp /etc/sudoers
+
+useradd -rN -d $APPHOME -s /bin/false $APPNAME
 git clone git://github.com/booski/passman.git $APPHOME
-chown -R passman $APPHOME
-chmod -R u=rwX,g=rX,o=rX $APPHOME
-chmod u+sx $APPHOME/passman
 ln -s $APPHOME/passman /usr/local/bin/$BINNAME
 
 (
@@ -50,3 +66,6 @@ ln -s $APPHOME/passman /usr/local/bin/$BINNAME
     . cryptapi.sh
     bootstrap $iuser $pw1
 )
+
+chown -R $APPNAME $APPHOME
+chmod -R u=rwX,g=rX,o=rX $APPHOME
