@@ -334,7 +334,7 @@ function add-pass {
 # adds a password to the system. It is identified by '$2', and its value is '$3'
 # an error is returned if '$1' is invalid or '$2' already exists
 
-    encrypt pass/$pname.admin $admintoken $pass
+    encrypt pass/$pname.admin $admintoken "$pass"
 }
 
 function remove-pass {

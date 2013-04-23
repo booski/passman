@@ -240,8 +240,6 @@ function execute {
 		    ;;
 	    esac
 	    
-	    echo -e "$pass"
-	    
 	    validate-admin || return $?
 	    ${action}"-"$type $ATOKEN $name "$pass"
 	    return $?
