@@ -23,7 +23,7 @@ SCRIPT=$0
 function assist {
     cat <<EOF
 
- $SCRIPT [-u <uname>] <command>
+ $SCRIPT [-u <uname>] [-e <editor>] <command>
 
  <comamnd> := ""
            := get <pname>
@@ -322,14 +322,15 @@ function execute {
 while var=$(echo "$1" | grep -E "^-")
 do
     shift
+    var=${var:1}
     case "$var" in
-	-u )
+	u )
 	    UNAME=$1 && shift
 	    ;;
-	-e )
+	e )
 	    EDITOR=$1 && shift
 	    ;;
-	-* )
+	* )
 	    assist
 	    exit $?
 	    ;;
