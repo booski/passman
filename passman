@@ -321,6 +321,7 @@ function execute {
 # check for switches, act on them and discard them
 while var=$(echo "$1" | grep -E "^-")
 do
+    echo $var
     shift
     var=${var:1}
     case "$var" in
