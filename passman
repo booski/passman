@@ -247,9 +247,9 @@ function execute {
 			    
 			    if [ -z "$EDITOR" ]
 			    then 
-				$EDITOR $tmpfile
-			    else
 				editor $tmpfile
+			    else
+			        $EDITOR $tmpfile
 			    fi
 			    
 			    if [ -s "$tmpfile" ]
@@ -327,6 +327,9 @@ do
     case "$var" in
 	-u )
 	    UNAME=$1 && shift
+	    ;;
+	-e )
+	    EDITOR=$1 && shift
 	    ;;
 	-* )
 	    assist
