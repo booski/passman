@@ -239,8 +239,6 @@ function execute {
 			    fi
 			    ;;
 			pass )
-			#    read -d $(echo -e '\e') \
-			#	 -p "$(echo -e "Enter the password data you want to save.\nEnd input by pressing ESC.\n ")" pass
 			    tmpfile="tmp-$(date +%y%m%d%H%M%S)"
 			    touch "$tmpfile"
 			    chmod 600 "$tmpfile"
