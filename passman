@@ -247,9 +247,9 @@ function execute {
 			    
 			    if [ -z "$EDITOR" ]
 			    then 
-				$EDITOR "$tmpfile"
+				$EDITOR $tmpfile
 			    else
-				editor "$tmpfile"
+				editor $tmpfile
 			    fi
 			    
 			    if [ -s "$tmpfile" ]
