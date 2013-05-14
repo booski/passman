@@ -35,7 +35,8 @@ function assist {
            := [del] [user <uname>|group <gname>|pass <pname>]
            := [promote|demote] <uname>
 
- In interactive mode, any valid <command> string is allowed.
+ In interactive mode, any valid <command> string is allowed along with
+ 'quit' or 'q' to exit the program and 'help' to show this message.
 
 EOF
 }
