@@ -358,7 +358,7 @@ function modify-pass {
 # replaces the content of '$2' with '$3'
 # an error is returned if '$1' is invalid or '$2' doesn't exist
 
-    for group in list-password-groups $pname
+    for group in $(list-password-groups $pname)
     do
 	rm pass/$pname.$group
 	if [ "$group" == "admin" ]
