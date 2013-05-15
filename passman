@@ -23,7 +23,7 @@ SCRIPT=$0
 function assist {
     cat <<EOF
 
- $SCRIPT [-u <uname>] [-i <editor>] <command>
+ $SCRIPT [-u <uname>] [-e <editor>] <command>
 
  <comamnd> := ""
            := get <pname>
