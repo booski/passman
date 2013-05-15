@@ -283,7 +283,7 @@ function execute {
 	    tmpfile="tmp-$(date +%y%m%d%H%M%S)"
 	    touch "$tmpfile"
 	    chmod 600 "$tmpfile"
-	    decrypt $pname $ATOKEN > $tmpfile
+	    show-pass $UNAME $UTOKEN $pname > $tmpfile
 
 	    if [ -z "$EDITOR" ]
 	    then 
@@ -299,6 +299,7 @@ function execute {
 		rm "$tmpfile"*
 	    else
 		echo "No password data given, not doing anything."
+		rm "$tmpfile"*
 		return 1
 	    fi
 	    
