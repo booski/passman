@@ -354,7 +354,7 @@ function remove-pass {
 function modify-pass {
     local admintoken=$1
     local pname=$2
-    local newpass=$3
+    local newpass="$3"
 # replaces the content of '$2' with '$3'
 # an error is returned if '$1' is invalid or '$2' doesn't exist
 
@@ -370,10 +370,10 @@ function modify-pass {
 	res=$?
 	[ -z "$gtok" ] && return $res
 
-	encrypt pass/$pname.$group $gtok $newpass
+	encrypt pass/$pname.$group $gtok "$newpass"
 
     done
     
-    encrypt pass/$pname.admin $admintoken $newpass
+    encrypt pass/$pname.admin $admintoken "$newpass"
     return $?
 }
