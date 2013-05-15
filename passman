@@ -49,7 +49,7 @@ function validate {
     fi
     if [ -z "$UTOKEN" ]
     then
-	read -sp "Password: " pw
+	read -sp "${UNAME}'s Password: " pw
 	echo
 	UTOKEN=$(decrypt user/$UNAME $pw)
 	local result=$?
