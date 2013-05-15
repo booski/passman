@@ -319,16 +319,16 @@ function execute {
 }
 
 # check for switches, act on them and discard them
-while var=$(echo "$1" | grep -E "^-")
+while [ ${1:0:1} = "-" ]
 do
+    var=${1:1}
     shift
-    var=${var:1}
     case "$var" in
 	u )
 	    UNAME=$1
 	    shift
 	    ;;
-	i )
+	e )
 	    EDITOR=$1
 	    shift
 	    ;;
