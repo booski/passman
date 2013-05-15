@@ -4,8 +4,8 @@
 APPUSER=passman
 
 # The system group that users must belong to to be able to run this application. 
-# Will not be created or validated by this installer.
-APPGROUP=dmc
+# Will be created if it doesn't exist.
+APPGROUP=passman
 
 # The directory that the application will be installed in.
 # The directory does not have to exist, but it must be empty if it does.
@@ -57,7 +57,8 @@ touch /etc/sudoers.d/${APPGROUP}"-"$BINNAME
 echo "%$APPGROUP ALL=($APPUSER) NOPASSWD: $APPHOME/passman" > /etc/sudoers.d/${APPGROUP}"-"$BINNAME
 chmod 440 /etc/sudoers.d/${APPGROUP}"-"$BINNAME
 
-useradd -rN -d $APPHOME -s /bin/false $APPUSER
+groupadd -r $APPGROUP || true
+useradd -rN -d $APPHOME -s /bin/false -g $APPGROUP $APPUSER
 git clone git://github.com/booski/passman.git $APPHOME
 ln -s $APPHOME/passman /usr/local/bin/$BINNAME
 
