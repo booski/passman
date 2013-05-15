@@ -350,3 +350,30 @@ function remove-pass {
 
     rm pass/$pname.*
 }
+
+function modify-pass {
+    local admintoken=$1
+    local pname=$2
+    local newpass=$3
+# replaces the content of '$2' with '$3'
+# an error is returned if '$1' is invalid or '$2' doesn't exist
+
+    for group in list-password-groups $pname
+    do
+	rm pass/$pname.$group
+	if [ "$group" == "admin" ]
+	then
+	    continue
+	fi
+
+	gtok=$(decrypt group/$group.admin $admintoken)
+	res=$?
+	[ -z "$gtok" ] && return $res
+
+	encrypt pass/$pname.$group $gtok $newpass
+
+    done
+    
+    encrypt pass/$pname.admin $admintoken $newpass
+    return $?
+}

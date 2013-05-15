@@ -33,6 +33,7 @@ function assist {
            := manage [user <uname> [+|-]<gname>|group <gname> [+|-]<pname>]
            := [add] [user <uname>|group <gname>|pass <pname>]
            := [del] [user <uname>|group <gname>|pass <pname>]
+           := modify <pname>
            := [promote|demote] <uname>
 
  In interactive mode, any valid <command> string is allowed along with
@@ -96,6 +97,7 @@ function execute {
         -e "^list (user|group|pass).*$" \
 	-e "^info (user|group|pass) $LEGAL_CHARS+$" \
         -e "^manage (user|group) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
+	-e "^modify $LEGAL_CHARS" \
         -e "^add (user|group|pass) $LEGAL_CHARS+$" \
         -e "^del (user|group|pass) $LEGAL_CHARS+$" \
         -e "^(promote|demote) $LEGAL_CHARS+$" 2>&1 >/dev/null
@@ -254,12 +256,12 @@ function execute {
 			    then
 				echo -e '\n' >> "$tmpfile"
 				pass=$(cat "$tmpfile")
-				rm "$tmpfile"
+				rm "$tmpfile"*
 			    else
 				echo "No password data given, not doing anything."
 				return 1
 			    fi
-			    ;;
+ 			    ;;
 			group )
 			    pass=""
 			    ;;
@@ -273,6 +275,35 @@ function execute {
 	    validate-admin || return $?
 	    ${action}"-"$type $ATOKEN $name "$pass"
 	    return $?
+	    ;;
+	modify )
+	    local pname=$1
+	    validate-admin
+
+	    tmpfile="tmp-$(date +%y%m%d%H%M%S)"
+	    touch "$tmpfile"
+	    chmod 600 "$tmpfile"
+	    decrypt $pname $ATOKEN > $tmpfile
+
+	    if [ -z "$EDITOR" ]
+	    then 
+		editor $tmpfile
+	    else
+		$EDITOR $tmpfile
+	    fi
+	    
+	    if [ -s "$tmpfile" ]
+	    then
+		echo -e '\n' >> "$tmpfile"
+		pass=$(cat "$tmpfile")
+		rm "$tmpfile"*
+	    else
+		echo "No password data given, not doing anything."
+		return 1
+	    fi
+	    
+	    modify-pass $ATOKEN $pname "$pass"
+	    return 0
 	    ;;
 	passwd )
 	    local pass1=""
