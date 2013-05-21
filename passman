@@ -51,7 +51,7 @@ function validate {
     then
 	read -sp "${UNAME}'s Password: " pw
 	echo
-	UTOKEN=$(decrypt user/$UNAME $pw)
+	UTOKEN=$(decrypt user/$UNAME "$pw")
 	local result=$?
 	unset pw
 	return $result
