@@ -352,7 +352,7 @@ function execute {
 		return 1
 	    fi
 	    unmake-user-admin $ATOKEN $name
-	    "'$name' is no longer an administrator."
+	    echo "'$name' is no longer an administrator."
 	    return $?
 	    ;;
 	"" )
