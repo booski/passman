@@ -54,6 +54,10 @@ function validate {
 	UTOKEN=$(decrypt user/$UNAME "$pw")
 	local result=$?
 	unset pw
+	if [ "$result" != "0" ]
+	then
+	    echo "Password incorrect."
+	fi
 	return $result
     fi
 }
@@ -117,9 +121,9 @@ function execute {
 
     case "$action" in
 	get )
-	    validate
+	    validate || return $?
 	    show-pass $UNAME $UTOKEN "$1" || echo "$UNAME cannot access $1."
-	    return 1
+	    return 0
 	    ;;
 	list )
 	    type=""
@@ -188,6 +192,7 @@ function execute {
 	    name=$2
 	    action=${3:0:1}
 	    member=${3:1}
+	    local message=""
 	    
 	    case "$type" in
 		user )
@@ -204,9 +209,11 @@ function execute {
 	    case "$action" in
 		"+" )
 		    action="map"
+		    message="added to"
 		    ;;
 		"-" )
 		    action="unmap"
+		    message="removed from"
 		    ;;
 		* )
 		    assist
@@ -215,11 +222,13 @@ function execute {
 	    
 	    validate-admin || return $?
 	    ${action}$type $ATOKEN $name $member
+	    echo "'$member' successfully $message '$name'."
 	    return $?
 	    ;;
 	add|del )
 	    type=$1
 	    name=$2
+	    local message=""
 	    case "$action" in
 		"add" )
 		    case "$type" in
@@ -274,11 +283,12 @@ function execute {
 	    
 	    validate-admin || return $?
 	    ${action}"-"$type $ATOKEN $name "$pass"
+	    echo "$type '$name' successfully "$([ "$action" = "add" ] && echo "added" || echo "removed")"." 
 	    return $?
 	    ;;
 	modify )
 	    local pname=$1
-	    validate-admin
+	    validate-admin || return $?
 
 	    tmpfile="tmp-$(date +%y%m%d%H%M%S)"
 	    touch "$tmpfile"
@@ -304,13 +314,14 @@ function execute {
 	    fi
 	    
 	    modify-pass $ATOKEN $pname "$pass"
+	    echo "Pass '$pname' successfully updated."
 	    return 0
 	    ;;
 	passwd )
 	    local pass1=""
 	    local pass2=""
 
-	    validate
+	    validate || return $?
 	    read -sp "New password: " pass1
 	    echo
 	    read -sp "Retype password: " pass2
@@ -321,14 +332,16 @@ function execute {
 
 	    unset pass1
 	    unset pass2
-
+	    
+	    [ "$result" = "0" ] && echo "Your password has been changed."
 	    return $result
 	    ;;
 	promote )
 	    name=$1
 	    validate-admin || return $?
 	    make-user-admin $ATOKEN $name
-	    return $?
+	    echo "'$name' is now an administrator."
+	    return 0
 	    ;;
 	demote )
 	    name=$1
@@ -339,6 +352,7 @@ function execute {
 		return 1
 	    fi
 	    unmake-user-admin $ATOKEN $name
+	    "'$name' is no longer an administrator."
 	    return $?
 	    ;;
 	"" )
