@@ -222,8 +222,22 @@ function execute {
 	    
 	    validate-admin || return $?
 	    ${action}$type $ATOKEN $name $member
-	    echo "'$member' successfully $message '$name'."
-	    return $?
+	    local result=$?
+	    case "$result" in
+		"0" )
+		    echo "'$member' successfully $message '$name'."
+		    ;;
+		"1" )
+		    echo "You cannot add/remove people from the admin group with this command."
+		    ;;
+		"3" )
+		    echo "'$member' is already in '$name'."
+		    ;;
+		* )
+		    echo "An error occurred."
+		    ;;
+	    esac
+	    return $result
 	    ;;
 	add|del )
 	    type=$1
