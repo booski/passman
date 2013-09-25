@@ -227,10 +227,10 @@ function execute {
 		"0" )
 		    echo "'$member' successfully $message '$name'."
 		    ;;
-		"1" )
+		"$E_PRIVILEGE" )
 		    echo "You cannot add/remove people from the admin group with this command."
 		    ;;
-		"3" )
+		"$E_CONFLICT" )
 		    echo "'$member' is already in '$name'."
 		    ;;
 		* )
