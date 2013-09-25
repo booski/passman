@@ -2,6 +2,12 @@
 
 set -e
 
+E_VALIDATE="1"  # wrong password etc
+E_CONFLICT="2"  # mapping already exists etc
+E_INVALID="3"   # invalid argument given
+E_PRIVILEGE="4" # user cannot access password etc
+E_GENERAL="99"  # uncategorized error
+
 function bootstrap {
     local fuser=$1
     local upass=$2
@@ -18,12 +24,12 @@ function bootstrap {
     if [ "$count" = 3 ] && [ -e group/admin.* ]
     then
 	echo "passman seems to be bootstrapped already, not doing anything."
-	return 1
+	return $E_CONFLICT
 
     elif [ ! "$count" = 0 ]
     then
 	echo "passman seems to be in an inconsistent state, please clean up before trying to bootstrap."
-	return 2
+	return $E_GENERAL
     fi
 
     mkdir user
@@ -67,7 +73,7 @@ function encrypt {
 # if the file exists, an error is returned
 # if the encryption encounters an error, its error code is returned
 
-    [ -e $name ] && return 10
+    [ -e $name ] && return $E_CONFLICT
 
     touch $name
     chmod 600 $name
@@ -84,7 +90,7 @@ function decrypt {
 # if the decryption encounters an error, its error code is returned
     
     export pass
-    ccrypt -cq -E pass $name 2>/dev/null
+    ccrypt -cq -E pass $name 2>/dev/null || return $E_VALIDATE
 }
 
 function make-token {
@@ -173,7 +179,7 @@ function show-pass {
 	    return $?
 	fi
     done
-    return 1
+    return $E_PRIVILEGE
 }
 
 function add-user {
@@ -186,10 +192,10 @@ function add-user {
 
     local utoken=$(make-token)
 
-    [ "$uname" = "admin" ] && return 1
+    [ "$uname" = "admin" ] && return $E_CONFLICT
 
-    encrypt user/$uname.admin $admintoken $utoken || return 2
-    encrypt user/$uname $upass $utoken || return 3
+    encrypt user/$uname.admin $admintoken $utoken || return $?
+    encrypt user/$uname $upass $utoken || return $?
 }
 
 function change-user-pass {
@@ -202,9 +208,9 @@ function change-user-pass {
     
     local testfile=$(ls group/*.$uname 2>/dev/null | tr '\n' ' ' | cut -d' ' -f1)
 
-    [ -n "$testfile" ] && { decrypt $testfile $utoken &> /dev/null || return 1; }
+    [ -n "$testfile" ] && { decrypt $testfile $utoken &> /dev/null || return $E_VALIDATE; }
     rm user/$uname
-    encrypt user/$uname $newpass $utoken || return 2
+    encrypt user/$uname $newpass $utoken || return $?
 	
 }
 
@@ -215,7 +221,7 @@ function remove-user {
 # also removes all group mappings for the user
 # returns an error if the user doesn't exist or '$1' is invalid
     
-    decrypt user/$uname.admin $admintoken &> /dev/null|| return 2
+    decrypt user/$uname.admin $admintoken &> /dev/null|| return $E_VALIDATE
 
     rm user/$uname*
     rm group/*.$uname 2>/dev/null || true
@@ -227,7 +233,7 @@ function make-user-admin {
 # makes '$2' an administrator
 # an error will be returned if '$1' is invalid
 
-    local utoken=$(decrypt user/$uname.admin $admintoken) || return 2
+    local utoken=$(decrypt user/$uname.admin $admintoken) || return $E_VALIDATE
 
     encrypt group/admin.$uname $utoken $admintoken
 }
@@ -238,7 +244,7 @@ function unmake-user-admin {
 # revokes '$2's admin privileges
 # an error is returned if the user isn't an administrator or '$1' is invalid
 
-    decrypt user/$uname.admin $admintoken &> /dev/null || return 2
+    decrypt user/$uname.admin $admintoken &> /dev/null || return $?
 
     rm group/admin.$uname
 }
@@ -251,10 +257,10 @@ function map-user-group {
 # admin privileges cannot be granted via this function
 # an error is returned if '$3' is 'admin', '$2' already belongs to '$3', or '$1' is invalid
 
-    [ "$gname" = "admin" ] && return 1
-    [ -e group/$gname.$uname ] && return 3
-    local utoken=$(decrypt user/$uname.admin $admintoken) || return 4
-    local gtoken=$(decrypt group/$gname.admin $admintoken) || return 5
+    [ "$gname" = "admin" ] && return $E_PRIVILEGE
+    [ -e group/$gname.$uname ] && return $E_CONFLICT
+    local utoken=$(decrypt user/$uname.admin $admintoken) || return $E_VALIDATE
+    local gtoken=$(decrypt group/$gname.admin $admintoken) || return $E_VALIDATE
 
     encrypt group/$gname.$uname $utoken $gtoken
 }
@@ -267,8 +273,8 @@ function unmap-user-group {
 # admin privileges cannot be revoked via this function
 # an error is returned if '$3' is admin, the mapping doesn't exist, or '$1' is invalid
 
-    [ "$gname" = "admin" ] && return 2
-    decrypt group/$gname.admin $admintoken &> /dev/null || return 3
+    [ "$gname" = "admin" ] && return $E_PRIVILEGE
+    decrypt group/$gname.admin $admintoken &> /dev/null || return $?
     
     rm group/$gname.$uname
 }
@@ -279,8 +285,8 @@ function add-group {
 # adds a group called '$2'
 # an error is returned if '$2' is 'admin', the group already exists, or '$1' is invalid
 
-    [ "$gname" = "admin" ] && return 1
-    [ -e group/$gname.admin ] && return 2
+    [ "$gname" = "admin" ] && return $E_PRIVILEGE
+    [ -e group/$gname.admin ] && return $E_CONFLICT
 
     local gtoken=$(make-token)
 
@@ -293,8 +299,8 @@ function remove-group {
 # removes the group named '$2'
 # an error is returned if '$2' is 'admin', '$2' doesn't exist, or '$1' is invalid
 
-    [ "$gname" = "admin" ] && return 1
-    decrypt group/$gname.admin $admintoken &> /dev/null || return 2
+    [ "$gname" = "admin" ] && return $E_PRIVILEGE
+    decrypt group/$gname.admin $admintoken &> /dev/null || return $?
 
     rm pass/*.$gname 2>/dev/null || true
     rm group/$gname.*
@@ -307,11 +313,11 @@ function map-group-pass {
 # adds '$3' to '$2'
 # an error is returned if '$2' is 'admin', the password is already in the group, or '$1' is invalid
 
-    [ "$gname" = "admin" ] && return 1
-    [ -e pass/$pname.$gname ] && return 2
+    [ "$gname" = "admin" ] && return $E_PRIVILEGE
+    [ -e pass/$pname.$gname ] && return $E_CONFLICT
 
-    local gtoken=$(decrypt group/$gname.admin $admintoken) || return 3
-    local pass=$(decrypt pass/$pname.admin $admintoken) || return 4
+    local gtoken=$(decrypt group/$gname.admin $admintoken) || return $E_VALIDATE
+    local pass=$(decrypt pass/$pname.admin $admintoken) || return $E_VALIDATE
 
     encrypt pass/$pname.$gname $gtoken $pass
 }
@@ -323,9 +329,9 @@ function unmap-group-pass {
 # removes '$3' from '$2'
 # returns an error if '$2' or '$3' is 'admin', the mapping doesn't exist, or '$1' is invalid
 
-    [ "$gname" = "admin" ] && return 1
-    decrypt pass/$pname.admin $admintoken &> /dev/null || return 2
-    decrypt group/$gname.admin $admintoken &> /dev/null || return 3
+    [ "$gname" = "admin" ] && return $E_PRIVILEGE
+    decrypt pass/$pname.admin $admintoken &> /dev/null || return $E_VALIDATE
+    decrypt group/$gname.admin $admintoken &> /dev/null || return $E_VALIDATE
 
     rm pass/$pname.$gname
 }
@@ -346,7 +352,7 @@ function remove-pass {
 # removes the password named '$2' from the system
 # an error is returned if '$1' is invalid or '$2' doesn't exist
 
-    decrypt pass/$pname.admin $admintoken &> /dev/null || return 2
+    decrypt pass/$pname.admin $admintoken &> /dev/null || return $?
 
     rm pass/$pname.*
 }
