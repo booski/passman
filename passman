@@ -27,18 +27,8 @@ function assist {
     else
 	cat help/$1 2>/dev/null || { echo "That is not a command."; return 1; }
     fi
+    echo
     return 0
-: <<EOC
-	case "$1" in
-		cat <<EOF
-EOF
-		;;
-	    * )
-		echo "That is not a command."
-		return 1
-		;;
-	esac
-EOC
 }
 
 function validate {

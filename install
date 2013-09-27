@@ -69,4 +69,3 @@ ln -s $APPHOME/passman /usr/local/bin/$BINNAME
 )
 
 chown -R $APPUSER $APPHOME
-chmod -R u=rwX,g=rX,o=rX $APPHOME

@@ -35,6 +35,8 @@ function bootstrap {
     mkdir user
     mkdir group
     mkdir pass
+    chmod -R u=rwX,g=rX,o=rX .
+
     local utoken=$(make-token)
     local atoken=$(make-token)
 
@@ -42,7 +44,7 @@ function bootstrap {
     encrypt group/admin.$fuser $utoken $atoken
     encrypt user/$fuser.admin $atoken $utoken
 
-
+    return 0
 }
 
 function validate-user {
