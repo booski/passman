@@ -1,0 +1,17 @@
+
+ $SCRIPT [-u <uname>] [-e <editor>] <command>
+
+ <command> := ""
+           := get <pname>
+           := passwd
+           := list [user|group|pass] <regexfilter>?
+           := info [user <uname>|group <gname>|pass <pname>]
+           := manage [user <uname> [+|-]<gname>|group <gname> [+|-]<pname>]
+           := add [user <uname>|group <gname>|pass <pname>]
+           := del [user <uname>|group <gname>|pass <pname>]
+           := modify <pname>
+           := [promote|demote] <uname>
+           := help <command>?
+
+ In interactive mode, any valid <command> string is allowed along with
+ 'quit' or 'q' to exit the program and 'help' to show this message.

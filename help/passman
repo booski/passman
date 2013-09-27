@@ -1,0 +1,27 @@
+
+ passman - a password manager
+ 
+ Usage:  $SCRIPT [-u <uname>] [-e <editor>] <command>
+ 
+ Commands available to all users are :
+
+   get     - retrieve a password
+   list    - list all users, groups or passwords
+   info    - get detailed information on a user, group 
+             or password
+   passwd  - change your master password
+   help    - get help
+
+ Commands available to administrative users are:
+ 
+   add     - adds a user, group or password
+   del     - delete a user, group or password
+   modify  - change a password
+   manage  - change the group membership of a user
+             or password
+   promote - make a user an administrator
+   demote  - remove a user's administrator privileges
+   
+
+ Detailed help on each command is available by using 
+  'help <command>'
