@@ -21,25 +21,91 @@ SCRIPT=$0
 . $API
 
 function assist {
-    cat <<EOF
+    if [ -z "$1" ]
+    then
+	cat <<EOF
+
+ passman - a password manager
+ 
+ Usage:  $SCRIPT [-u <uname>] [-e <editor>] <command>
+ 
+ Commands available to all users are :
+
+   get     - retrieve a password
+   list    - list all users, groups or passwords
+   info    - get detailed information on a user, group 
+             or password
+   passwd  - change your master password
+   help    - get help
+
+ Commands available to administrative users are:
+ 
+   add     - adds a user, group or password
+   del     - delete a user, group or password
+   modify  - change a password
+   manage  - change the group membership of a user
+             or password
+   promote - make a user an administrator
+   demote  - remove a user's administrator privileges
+   
+
+ Detailed help on each command is available by using 
+  'help <command>'
+
+EOF
+    else
+	case "$1" in
+	    get )
+		;;
+	    list )
+		;;
+	    info )
+		;;
+	    passwd )
+		;;
+	    "help" )
+		;;
+	    add )
+		;;
+	    del )
+		;;
+	    modify )
+		;;
+	    manage )
+		;;
+	    promote )
+		;;
+	    demote )
+		;;
+	    grammar )
+		cat <<EOF
 
  $SCRIPT [-u <uname>] [-e <editor>] <command>
 
- <comamnd> := ""
+ <command> := ""
            := get <pname>
            := passwd
            := list [user|group|pass] <regexfilter>?
            := info [user <uname>|group <gname>|pass <pname>]
            := manage [user <uname> [+|-]<gname>|group <gname> [+|-]<pname>]
-           := [add] [user <uname>|group <gname>|pass <pname>]
-           := [del] [user <uname>|group <gname>|pass <pname>]
+           := add [user <uname>|group <gname>|pass <pname>]
+           := del [user <uname>|group <gname>|pass <pname>]
            := modify <pname>
            := [promote|demote] <uname>
+           := help <command>?
 
  In interactive mode, any valid <command> string is allowed along with
  'quit' or 'q' to exit the program and 'help' to show this message.
 
 EOF
+		;;
+	    * )
+		echo "That is not a command."
+		return 1
+		;;
+	esac
+    fi
+    return 0
 }
 
 function validate {
@@ -104,7 +170,9 @@ function execute {
 	-e "^modify $LEGAL_CHARS" \
         -e "^add (user|group|pass) $LEGAL_CHARS+$" \
         -e "^del (user|group|pass) $LEGAL_CHARS+$" \
-        -e "^(promote|demote) $LEGAL_CHARS+$" 2>&1 >/dev/null
+        -e "^(promote|demote) $LEGAL_CHARS+$" \
+	-e "^help $LEGAL_CHARS" \
+	2>&1 >/dev/null
     then
 	assist
 	return 1
@@ -368,6 +436,9 @@ function execute {
 	    unmake-user-admin $ATOKEN $name
 	    echo "'$name' is no longer an administrator."
 	    return $?
+	    ;;
+	'help' )
+	    assist $1
 	    ;;
 	"" )
 	    return 0
