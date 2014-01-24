@@ -161,10 +161,10 @@ function list-available {
 
     for gname in $groups
     do
-	passes=$passes"\n"$(list-group-passes $gname)
+	passes=$(list-group-passes $gname)" "$passes
     done
 
-    local out=$(echo $passes | sort -u)
+    local out=$(printf "$passes" | sort -u)
     printf "$out\n"
 }
 
