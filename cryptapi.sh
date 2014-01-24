@@ -105,7 +105,8 @@ function list-user-groups {
     local uname=$1
 # prints all groups that '$1' belongs to as a space-delimited list
     
-    echo $(ls group/*.$uname 2>/dev/null | sed -r -e "s%^group/%%" -e "s%\.$uname$%%" | tr ' ' '\n' | sort -u)
+    local out=$(ls group/*.$uname 2>/dev/null | sed -r -e "s%^group/%%" -e "s%\.$uname$%%" | sort -u)
+    printf "$out\n"
 }
 
 function list-group-passes {
@@ -113,35 +114,41 @@ function list-group-passes {
 # prints all password files belonging to '$1' as a space-delimited list
 # does not decrypt any passwords
     
-    echo $(ls pass/*.$gname 2>/dev/null | sed -r -e "s%^pass/%%" -e "s%\.$gname$%%" | tr ' ' '\n' | sort -u)
+    local out=$(ls pass/*.$gname 2>/dev/null | sed -r -e "s%^pass/%%" -e "s%\.$gname$%%" | sort -u)
+    printf "$out\n"
 }
 
 function list-password-groups {
     local pname=$1
 # prints all the groups that '$1' belongs to as a space-delimited list
     
-    echo $(ls pass/$pname.* 2>/dev/null | sed -r "s%^pass/$pname\.%%" | tr ' ' '\n' | sort -u)
+    local out=$(ls pass/$pname.* 2>/dev/null | sed -r "s%^pass/$pname\.%%" | sort -u)
+    printf "$out\n"
 }
 
 function list-group-users {
     local gname=$1
 # prints all the users that belong to '$1' as a space-delimited list
 
-    echo $(ls group/$gname.* 2>/dev/null | sed -r "s%^group/$gname\.%%" | tr ' ' '\n' | sort -u)
+    local out=$(ls group/$gname.* 2>/dev/null | sed -r "s%^group/$gname\.%%" | sort -u)
+    printf "$out\n"
 }
 
 function list-passwords {
 # prints all the passwords stored in the system
 # does not decrypt any passwords, only prints identifiers
-    echo $(ls pass/ | sed -r -e "s%^pass/%%" -e "s%.[^.]+$%%" | tr ' ' '\n' | sort -u)
+    local out=$(ls pass/ | sed -r -e "s%^pass/%%" -e "s%.[^.]+$%%" | sort -u)
+    printf "$out\n"
 }
 
 function list-users {
-    echo $(ls user/ | sed -r -e "s%^user/%%" -e "s%.[^.]+$%%" | tr ' ' '\n' | sort -u)
+    local out=$(ls user/ | sed -r -e "s%^user/%%" -e "s%.[^.]+$%%" | sort -u)
+    printf "$out\n"
 }
 
 function list-groups {
-    echo $(ls group/ | sed -r -e "s%^group/%%" -e "s%.[^.]+$%%" | tr ' ' '\n' | sort -u)
+    local out=$(ls group/ | sed -r -e "s%^group/%%" -e "s%.[^.]+$%%" | sort -u)
+    printf "$out\n"
 }
 
 function list-available {
@@ -154,10 +161,11 @@ function list-available {
 
     for gname in $groups
     do
-	passes=$passes" "$(list-group-passes $gname)
+	passes=$passes"\n"$(list-group-passes $gname)
     done
 
-    echo $(echo $passes | tr ' ' '\n' | sort -u)
+    local out=$(echo $passes | sort -u)
+    printf "$out\n"
 }
 
 function show-pass {
