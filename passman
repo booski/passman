@@ -3,7 +3,7 @@
 set -e
 
 realbin=$(readlink -f $0)
-[ ! "$(id -un)" = "passman" ] && {
+[ ! "$(id -un)" = "passman" ] && [ -z "$PASSMAN_TEST" ] && {
     exec sudo -u passman $realbin $@
 }
 
