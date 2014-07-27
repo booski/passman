@@ -1,1 +1,7 @@
-TODO
+manage user USER [+|-]GROUP
+
+  Add or remove USER from GROUP.
+
+manage group GROUP [+|-]PASSWORD
+
+  Add or remove PASSWORD from GROUP.

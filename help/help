@@ -1,1 +1,4 @@
-TODO
+help [COMMAND]
+
+  Show a list of all commands. If COMMAND is given, show help for
+  COMMAND.
