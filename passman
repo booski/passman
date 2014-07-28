@@ -23,7 +23,7 @@ if [ -z "$RLWRAP_RUNNING" ] && which rlwrap >/dev/null &&
     EXTRA_COMP=$HOME/.passman_completions
     list-passwords > $EXTRA_COMP
     export RLWRAP_RUNNING=1
-    exec rlwrap -C passman -f completions -f $EXTRA_COMP $realbin "$@"
+    exec rlwrap -C passman -b '' -f completions -f $EXTRA_COMP $realbin "$@"
 fi
 
 [ ! "$(id -un)" = "passman" ] && [ -z "$PASSMAN_TEST" ] && {
