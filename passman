@@ -73,9 +73,6 @@ function validate-admin {
 
 function menu {
     local action=""
-    if [ -z "$RLWRAP_RUNNING" ]; then
-        echo "Tip: Install rlwrap to get command line editing."
-    fi
     while true
     do
 	echo -n "passman> "
