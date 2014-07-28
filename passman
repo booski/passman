@@ -3,6 +3,12 @@
 set -e
 
 realbin=$(readlink -f $0)
+
+if [ -z "$RLWRAP_RUNNING" ] && which rlwrap >/dev/null; then
+    export RLWRAP_RUNNING=1
+    exec rlwrap -C passman $realbin
+fi
+
 [ ! "$(id -un)" = "passman" ] && [ -z "$PASSMAN_TEST" ] && {
     exec sudo -u passman $realbin $@
 }
@@ -63,6 +69,9 @@ function validate-admin {
 
 function menu {
     local action=""
+    if [ -z "$RLWRAP_RUNNING" ]; then
+        echo "Tip: Install rlwrap to get command line editing."
+    fi
     while true
     do
 	echo -n "passman> "
