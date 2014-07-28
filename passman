@@ -4,15 +4,6 @@ set -e
 
 realbin=$(readlink -f $0)
 
-if [ -z "$RLWRAP_RUNNING" ] && which rlwrap >/dev/null; then
-    export RLWRAP_RUNNING=1
-    exec rlwrap -C passman $realbin
-fi
-
-[ ! "$(id -un)" = "passman" ] && [ -z "$PASSMAN_TEST" ] && {
-    exec sudo -u passman $realbin $@
-}
-
 cd $(dirname $realbin)
 
 API="cryptapi.sh"
@@ -25,6 +16,19 @@ ATOKEN=""
 SCRIPT=$0
 
 . $API
+
+# Enable command line editing, history and completion
+if [ -z "$RLWRAP_RUNNING" ] && which rlwrap >/dev/null &&
+    [ "$(id -un)" != passman ]; then
+    EXTRA_COMP=$HOME/.passman_completions
+    list-available > $EXTRA_COMP
+    export RLWRAP_RUNNING=1
+    exec rlwrap -C passman -f completions -f $EXTRA_COMP $realbin
+fi
+
+[ ! "$(id -un)" = "passman" ] && [ -z "$PASSMAN_TEST" ] && {
+    exec sudo -u passman $realbin $@
+}
 
 function assist {
     if [ -z "$1" ]
