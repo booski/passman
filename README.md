@@ -3,16 +3,12 @@ passman
 
 Passman is a multi-user password manager written in bash.
 
-Dependencies
-------------
-
-    apt-get install ccrypt pwgen rlwrap
-
 Installation
 ------------
 
-    sudo git clone https://github.com/dsv-su/passman.git /opt/passman
-    sudo /opt/passman/install
+    sudo apt-get install ccrypt pwgen rlwrap
+    wget https://raw.githubusercontent.com/dsv-su/passman/master/install
+    sudo bash install
 
 Usage
 -----
