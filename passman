@@ -21,13 +21,13 @@ SCRIPT=$0
 if [ -z "$RLWRAP_RUNNING" ] && which rlwrap >/dev/null &&
     [ "$(id -un)" != passman ]; then
     EXTRA_COMP=$HOME/.passman_completions
-    list-available > $EXTRA_COMP
+    list-passwords > $EXTRA_COMP
     export RLWRAP_RUNNING=1
-    exec rlwrap -C passman -f completions -f $EXTRA_COMP $realbin
+    exec rlwrap -C passman -f completions -f $EXTRA_COMP $realbin "$@"
 fi
 
 [ ! "$(id -un)" = "passman" ] && [ -z "$PASSMAN_TEST" ] && {
-    exec sudo -u passman $realbin $@
+    exec sudo -u passman $realbin "$@"
 }
 
 function assist {
