@@ -73,6 +73,10 @@ function validate-admin {
 
 function menu {
     local action=""
+
+    # change window title
+    printf "\033]0;passman@$(hostname)\007"
+
     while true
     do
 	echo -n "passman> "
