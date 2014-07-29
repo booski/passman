@@ -40,7 +40,7 @@ function bootstrap {
     local utoken=$(make-token)
     local atoken=$(make-token)
 
-    encrypt user/$fuser $upass $utoken
+    encrypt user/"$fuser" "$upass" "$utoken"
     encrypt group/admin.$fuser $utoken $atoken
     encrypt user/$fuser.admin $atoken $utoken
 
@@ -329,7 +329,7 @@ function map-group-pass {
     local gtoken=$(decrypt group/$gname.admin $admintoken) || return $E_VALIDATE
     local pass=$(decrypt pass/$pname.admin $admintoken) || return $E_VALIDATE
 
-    encrypt pass/$pname.$gname $gtoken $pass
+    encrypt pass/$pname.$gname "$gtoken" "$pass"
 }
 
 function unmap-group-pass {
