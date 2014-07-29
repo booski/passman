@@ -413,6 +413,6 @@ case "$1" in
 	menu
 	;;
     * )
-	execute $@
+	execute "$@"
 	;;
 esac
