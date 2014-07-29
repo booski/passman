@@ -90,7 +90,7 @@ function menu {
 		assist
 		;;
 	    * )
-		execute "$action" || true
+		execute $action || true
 		;;
 	esac
     done
