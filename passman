@@ -183,7 +183,7 @@ function execute {
 		    name="$2"
 		    
 		    echo "$name belongs to the following groups:"
-		    list-password-groups $name
+		    list-password-groups "$name"
 		    return 0
 		    ;;
 		* )
@@ -302,7 +302,7 @@ function execute {
 	    
 	    validate-admin || return $?
 	    ${action}"-"$type "$ATOKEN" "$name" "$pass"
-	    echo "$type '$name' successfully "$([ "$action" = "add" ] && echo "added" || echo "removed")"." 
+	    echo "$type '$name' successfully $([ "$action" = "add" ] && echo "added" || echo "removed")."
 	    return $?
 	    ;;
 	modify )
