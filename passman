@@ -75,7 +75,7 @@ function menu {
     local action=""
 
     # change window title
-    printf "\033]0;passman@%2\007" "$(hostname)"
+    printf "\033]0;passman@%s\007" "$(hostname)"
 
     while true
     do
