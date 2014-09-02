@@ -126,6 +126,7 @@ function execute {
 
     case "$action" in
 	get )
+	    list-passwords | grep -q "$1" || { echo "Password '$1' doesn't exist." && return 1; }
 	    validate || return $?
 	    show-pass "$UNAME" "$UTOKEN" "$1" || { echo "$UNAME cannot access $1." && return 1; }
 	    return 0
