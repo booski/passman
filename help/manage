@@ -2,6 +2,6 @@ manage user USER [+|-]GROUP
 
   Add or remove USER from GROUP.
 
-manage group GROUP [+|-]PASSWORD
+manage pass PASSWORD [+|-]GROUP
 
   Add or remove PASSWORD from GROUP.
