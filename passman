@@ -103,7 +103,7 @@ function execute {
 	-e "^passwd$" \
         -e "^list (user|group|pass).*$" \
 	-e "^info (user|group|pass) $LEGAL_CHARS+$" \
-        -e "^manage (user|group) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
+        -e "^manage (user|pass) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
 	-e "^modify $LEGAL_CHARS" \
         -e "^add (user|group|pass) $LEGAL_CHARS+$" \
         -e "^del (user|group|pass) $LEGAL_CHARS+$" \
@@ -197,21 +197,9 @@ function execute {
 	    type="$1"
 	    name="$2"
 	    action="${3:0:1}"
-	    member="${3:1}"
+	    group="${3:1}"
 	    local message=""
 	    
-	    case "$type" in
-		user )
-		    type="-user-group"
-		    ;;
-		group )
-		    type="-group-pass"
-		    ;;
-		* )
-		    assist
-		    return $?
-		    ;;
-	    esac
 	    case "$action" in
 		"+" )
 		    action="map"
@@ -227,17 +215,17 @@ function execute {
 	    esac
 	    
 	    validate-admin || return $?
-	    ${action}$type "$ATOKEN" "$name" "$member"
+	    ${action}-${type}-group "$ATOKEN" "$name" "$group"
 	    local result=$?
 	    case "$result" in
 		"0" )
-		    echo "'$member' successfully $message '$name'."
+		    echo "'$name' successfully $message '$group'."
 		    ;;
 		"$E_PRIVILEGE" )
 		    echo "You cannot add/remove people from the admin group with this command."
 		    ;;
 		"$E_CONFLICT" )
-		    echo "'$member' is already in '$name'."
+		    echo "'$name' is already in '$group'."
 		    ;;
 		* )
 		    echo "An error occurred."

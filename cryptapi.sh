@@ -316,10 +316,10 @@ function remove-group {
     rm group/"$gname".*
 }
 
-function map-group-pass {
+function map-pass-group {
     local admintoken="$1"
-    local gname="$2"
-    local pname="$3"
+    local pname="$2"
+    local gname="$3"
 # adds '$3' to '$2'
 # an error is returned if '$2' is 'admin', the password is already in the group, or '$1' is invalid
 
@@ -332,10 +332,10 @@ function map-group-pass {
     encrypt pass/"$pname"."$gname" "$gtoken" "$pass"
 }
 
-function unmap-group-pass {
+function unmap-pass-group {
     local admintoken="$1"
-    local gname="$2"
-    local pname="$3"
+    local pname="$2"
+    local gname="$3"
 # removes '$3' from '$2'
 # returns an error if '$2' or '$3' is 'admin', the mapping doesn't exist, or '$1' is invalid
 
