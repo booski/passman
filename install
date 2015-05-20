@@ -31,6 +31,10 @@ function die {
     die "You must be root to install this application." 1
 }
 
+! which ccrypt &>/dev/null && {
+    die 'ccrypt not found. Please install it and make sure it is available in $PATH' 6
+}
+
 ls $APPHOME/* &>/dev/null && {
     die "'$APPHOME' is not empty, please choose a different installation folder." 2
 }
