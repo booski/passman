@@ -55,7 +55,7 @@ echo
 
 
 [ -e /etc/sudoers.d/$BINNAME ] && {
-    rm /etc/sudoers.tmp
+    rm /etc/sudoers.tmp || true
     die "There is already a file /etc/sudoers.d/$BINNAME, please choose a different name" 5
 }
 

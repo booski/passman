@@ -44,7 +44,7 @@ function assist {
 function validate {
     if [ -z "$UNAME" ]
     then
-	read -p "Authenticate as user: " UNAME
+	UNAME=$SUDO_USER
     fi
     if [ -z "$UTOKEN" ]
     then
