@@ -22,6 +22,7 @@ if [ -z "$RLWRAP_RUNNING" ] && which rlwrap >/dev/null &&
     [ "$(id -un)" != passman ]; then
     EXTRA_COMP="$HOME"/.passman_completions
     list-passwords > "$EXTRA_COMP"
+    touch "$HOME"/.passman_history
     export RLWRAP_RUNNING=1
     exec rlwrap -C passman -b '' -f completions -f "$EXTRA_COMP" "$realbin" "$@"
 fi
