@@ -2,12 +2,9 @@
 
 set -e
 
-realbin=$(readlink -f $0)
-[ ! "$(id -un)" = "passman" ] && {
-    exec sudo -u passman $realbin $@
-}
+realbin=$(readlink -f "$0")
 
-cd $(dirname $realbin)
+cd $(dirname "$realbin")
 
 API="cryptapi.sh"
 LEGAL_CHARS="[[:alnum:]_-]"
@@ -16,16 +13,30 @@ UTOKEN=""
 
 ATOKEN=""
 
-SCRIPT=$0
+SCRIPT="$0"
 
-. $API
+. "$API"
+
+# Enable command line editing, history and completion
+if [ -z "$RLWRAP_RUNNING" ] && which rlwrap >/dev/null &&
+    [ "$(id -un)" != passman ]; then
+    EXTRA_COMP="$HOME"/.passman_completions
+    list-passwords > "$EXTRA_COMP"
+    touch "$HOME"/.passman_history
+    export RLWRAP_RUNNING=1
+    exec rlwrap -C passman -b '' -f completions -f "$EXTRA_COMP" "$realbin" "$@"
+fi
+
+[ ! "$(id -un)" = "passman" ] && [ -z "$PASSMAN_TEST" ] && {
+    exec sudo -u passman "$realbin" "$@"
+}
 
 function assist {
     if [ -z "$1" ]
     then
 	cat help/passman
     else
-	cat help/$1 2>/dev/null || { echo "That is not a command."; return 1; }
+	cat help/"$1" 2>/dev/null || { echo "That is not a command."; return 1; }
     fi
     echo
     return 0
@@ -34,28 +45,28 @@ function assist {
 function validate {
     if [ -z "$UNAME" ]
     then
-	read -p "Authenticate as user: " UNAME
+	UNAME=$SUDO_USER
     fi
     if [ -z "$UTOKEN" ]
     then
 	read -sp "${UNAME}'s Password: " pw
 	echo
-	UTOKEN=$(decrypt user/$UNAME "$pw")
+	UTOKEN=$(decrypt user/"$UNAME" "$pw")
 	local result=$?
 	unset pw
 	if [ "$result" != "0" ]
 	then
 	    echo "Password incorrect."
 	fi
-	return $result
+	return "$result"
     fi
 }
 
 function validate-admin {
     validate
-    if [ -z $ATOKEN ]
+    if [ -z "$ATOKEN" ]
     then
-	ATOKEN=$(decrypt group/admin.$UNAME $UTOKEN)
+	ATOKEN=$(decrypt group/admin."$UNAME" "$UTOKEN")
     fi
     return $?
 
@@ -63,6 +74,10 @@ function validate-admin {
 
 function menu {
     local action=""
+
+    # change window title
+    printf "\033]0;passman@%s\007" "$(hostname)"
+
     while true
     do
 	echo -n "passman> "
@@ -89,7 +104,7 @@ function execute {
 	-e "^passwd$" \
         -e "^list (user|group|pass).*$" \
 	-e "^info (user|group|pass) $LEGAL_CHARS+$" \
-        -e "^manage (user|group) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
+        -e "^manage (user|pass) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
 	-e "^modify $LEGAL_CHARS" \
         -e "^add (user|group|pass) $LEGAL_CHARS+$" \
         -e "^del (user|group|pass) $LEGAL_CHARS+$" \
@@ -101,7 +116,7 @@ function execute {
 	return 1
     fi
     
-    local action=$1
+    local action="$1"
     shift
 
     local type=""
@@ -112,8 +127,9 @@ function execute {
 
     case "$action" in
 	get )
+	    list-passwords | grep -q "^$1$" || { echo "Password '$1' doesn't exist." && return 1; }
 	    validate || return $?
-	    show-pass $UNAME $UTOKEN "$1" || { echo "$UNAME cannot access $1." && return 1; }
+	    show-pass "$UNAME" "$UTOKEN" "$1" || { echo "$UNAME cannot access $1." && return 1; }
 	    return 0
 	    ;;
 	list )
@@ -133,43 +149,43 @@ function execute {
 		    return $?
 		    ;;
 	    esac
-	    local regex=$2
+	    local regex="$2"
 	    
-	    printf "$(list-$type | tr ' ' '\n' | grep -E "$regex")\n"
+	    printf "%s\n" "$(list-"$type" | tr ' ' '\n' | grep -E "$regex")"
 	    return 0
 	    ;;
 	
 	info )
 	    case "$1" in
 		user )
-		    name=$2
+		    name="$2"
 		    
 		    echo
 		    echo "$name is in the following groups:"
-		    list-user-groups $name
+		    list-user-groups "$name"
 		    echo
 		    echo "$name can access the following passwords:"
-		    list-available $name
+		    list-available "$name"
 		    echo
 		    return 0
 		    ;;
 		group )
-		    name=$2
+		    name="$2"
 		    
 		    echo
 		    echo "$name has the following members:"
-		    list-group-users $name
+		    list-group-users "$name"
 		    echo
 		    echo "$name contains the following passwords:"
-		    list-group-passes $name
+		    list-group-passes "$name"
 		    echo
 		    return 0
 		    ;;
 		pass )
-		    name=$2
+		    name="$2"
 		    
 		    echo "$name belongs to the following groups:"
-		    list-password-groups $name
+		    list-password-groups "$name"
 		    return 0
 		    ;;
 		* )
@@ -179,24 +195,12 @@ function execute {
 	    esac
 	    ;;
 	manage )
-	    type=$1
-	    name=$2
-	    action=${3:0:1}
-	    member=${3:1}
+	    type="$1"
+	    name="$2"
+	    action="${3:0:1}"
+	    group="${3:1}"
 	    local message=""
 	    
-	    case "$type" in
-		user )
-		    type="-user-group"
-		    ;;
-		group )
-		    type="-group-pass"
-		    ;;
-		* )
-		    assist
-		    return $?
-		    ;;
-	    esac
 	    case "$action" in
 		"+" )
 		    action="map"
@@ -212,27 +216,27 @@ function execute {
 	    esac
 	    
 	    validate-admin || return $?
-	    ${action}$type $ATOKEN $name $member
+	    ${action}-${type}-group "$ATOKEN" "$name" "$group"
 	    local result=$?
 	    case "$result" in
 		"0" )
-		    echo "'$member' successfully $message '$name'."
+		    echo "'$name' successfully $message '$group'."
 		    ;;
 		"$E_PRIVILEGE" )
 		    echo "You cannot add/remove people from the admin group with this command."
 		    ;;
 		"$E_CONFLICT" )
-		    echo "'$member' is already in '$name'."
+		    echo "'$name' is already in '$group'."
 		    ;;
 		* )
 		    echo "An error occurred."
 		    ;;
 	    esac
-	    return $result
+	    return "$result"
 	    ;;
 	add|del )
-	    type=$1
-	    name=$2
+	    type="$1"
+	    name="$2"
 	    local message=""
 	    case "$action" in
 		"add" )
@@ -261,9 +265,9 @@ function execute {
 			    
 			    if [ -z "$EDITOR" ]
 			    then 
-				editor $tmpfile
+				editor "$tmpfile"
 			    else
-			        $EDITOR $tmpfile
+			        "$EDITOR" "$tmpfile"
 			    fi
 			    
 			    if [ -s "$tmpfile" ]
@@ -287,24 +291,24 @@ function execute {
 	    esac
 	    
 	    validate-admin || return $?
-	    ${action}"-"$type $ATOKEN $name "$pass"
-	    echo "$type '$name' successfully "$([ "$action" = "add" ] && echo "added" || echo "removed")"." 
+	    ${action}"-"$type "$ATOKEN" "$name" "$pass"
+	    echo "$type '$name' successfully $([ "$action" = "add" ] && echo "added" || echo "removed")."
 	    return $?
 	    ;;
 	modify )
-	    local pname=$1
+	    local pname="$1"
 	    validate-admin || return $?
 
 	    tmpfile="tmp-$(date +%y%m%d%H%M%S)"
 	    touch "$tmpfile"
 	    chmod 600 "$tmpfile"
-	    show-pass $UNAME $UTOKEN $pname > $tmpfile
+	    show-pass "$UNAME" "$UTOKEN" "$pname" > "$tmpfile"
 
 	    if [ -z "$EDITOR" ]
 	    then 
-		editor $tmpfile
+		editor "$tmpfile"
 	    else
-		$EDITOR $tmpfile
+		"$EDITOR" "$tmpfile"
 	    fi
 	    
 	    if [ -s "$tmpfile" ]
@@ -318,7 +322,7 @@ function execute {
 		return 1
 	    fi
 	    
-	    modify-pass $ATOKEN $pname "$pass"
+	    modify-pass "$ATOKEN" "$pname" "$pass"
 	    echo "Pass '$pname' successfully updated."
 	    return 0
 	    ;;
@@ -332,36 +336,36 @@ function execute {
 	    read -sp "Retype password: " pass2
 	    echo
 
-	    [ "$pass1" = "$pass2" ] && change-user-pass $UTOKEN $UNAME $pass1
+	    [ "$pass1" = "$pass2" ] && change-user-pass "$UTOKEN" "$UNAME" "$pass1"
 	    result=$?
 
 	    unset pass1
 	    unset pass2
 	    
 	    [ "$result" = "0" ] && echo "Your password has been changed."
-	    return $result
+	    return "$result"
 	    ;;
 	promote )
 	    name=$1
 	    validate-admin || return $?
-	    make-user-admin $ATOKEN $name
+	    make-user-admin "$ATOKEN" "$name"
 	    echo "'$name' is now an administrator."
 	    return 0
 	    ;;
 	demote )
-	    name=$1
+	    name="$1"
 	    validate-admin || return $?
 	    if [ "$name" == "$UNAME" ]
 	    then
 		echo "You cannot demote yourself, not doing anything."
 		return 1
 	    fi
-	    unmake-user-admin $ATOKEN $name
+	    unmake-user-admin "$ATOKEN" "$name"
 	    echo "'$name' is no longer an administrator."
 	    return $?
 	    ;;
 	'help' )
-	    assist $1
+	    assist "$1"
 	    ;;
 	"" )
 	    return 0
@@ -379,11 +383,11 @@ do
     shift
     case "$var" in
 	u )
-	    UNAME=$1
+	    UNAME="$1"
 	    shift
 	    ;;
 	e )
-	    EDITOR=$1
+	    EDITOR="$1"
 	    shift
 	    ;;
 	* )
@@ -399,6 +403,6 @@ case "$1" in
 	menu
 	;;
     * )
-	execute $@
+	execute "$@"
 	;;
 esac

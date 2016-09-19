@@ -1,1 +1,13 @@
-TODO
+info user USER
+
+  Show which groups USER belongs to and which passwords USER can
+  access.
+
+info group GROUP
+
+  Show which users are members of GROUP and which passwords the
+  members of GROUP can access.
+
+info pass PASSWORD
+
+  Show which groups can access PASSWORD.

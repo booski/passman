@@ -1,9 +1,9 @@
 
  passman - a password manager
  
- Usage:  $SCRIPT [-u <uname>] [-e <editor>] <command>
+ Usage: passman [-u <uname>] [-e <editor>] <command>
  
- Commands available to all users are :
+ Commands available to all users are:
 
    get     - retrieve a password
    list    - list all users, groups or passwords

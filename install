@@ -14,6 +14,8 @@ APPHOME=/opt/passman
 # The name under which the application will be symlinked in /usr/local/bin.
 BINNAME=passman
 
+# Repository to clone from
+REPO=https://github.com/dsv-su/passman.git
 
 ###################### Installer follows, do not edit ######################
 
@@ -27,6 +29,10 @@ function die {
 
 [ ! "$(id -u)" = 0 ] && {
     die "You must be root to install this application." 1
+}
+
+! which ccrypt &>/dev/null && {
+    die 'ccrypt not found. Please install it and make sure it is available in $PATH' 6
 }
 
 ls $APPHOME/* &>/dev/null && {
@@ -49,7 +55,7 @@ echo
 
 
 [ -e /etc/sudoers.d/$BINNAME ] && {
-    rm /etc/sudoers.tmp
+    rm /etc/sudoers.tmp || true
     die "There is already a file /etc/sudoers.d/$BINNAME, please choose a different name" 5
 }
 
@@ -59,7 +65,7 @@ chmod 440 /etc/sudoers.d/$BINNAME
 
 groupadd -r $APPGROUP || true
 useradd -rN -d $APPHOME -s /bin/false -g $APPGROUP $APPUSER
-git clone git://github.com/booski/passman.git $APPHOME
+git clone $REPO $APPHOME
 ln -s $APPHOME/passman /usr/local/bin/$BINNAME
 
 (

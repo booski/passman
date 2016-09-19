@@ -1,0 +1,15 @@
+get
+passwd
+list
+info
+manage
+modify
+add
+del
+promote
+demote
+help
+user
+group
+pass
+quit
