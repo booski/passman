@@ -35,5 +35,4 @@ do
     then
 	die "$E_BADSTATE" "There is more than one $item in the database."
     fi
-fi
-
+done
