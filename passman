@@ -7,6 +7,7 @@ realbin=$(readlink -f "$0")
 cd $(dirname "$realbin")
 
 API="cryptapi.sh"
+CONFIG="config"
 LEGAL_CHARS="[[:alnum:]_-]"
 UNAME=""
 UTOKEN=""
@@ -16,10 +17,13 @@ ATOKEN=""
 SCRIPT="$0"
 
 . "$API"
+. "$CONFIG"
 
 # Enable command line editing, history and completion
-if [ -z "$RLWRAP_RUNNING" ] && which rlwrap >/dev/null &&
-    [ "$(id -un)" != passman ]; then
+if [ -z "$RLWRAP_RUNNING" ] 
+    && which rlwrap >/dev/null 
+    && [ "$(id -un)" != "$APPUSER" ]
+then
     EXTRA_COMP="$HOME"/.passman_completions
     list-passwords > "$EXTRA_COMP"
     touch "$HOME"/.passman_history
@@ -27,16 +31,22 @@ if [ -z "$RLWRAP_RUNNING" ] && which rlwrap >/dev/null &&
     exec rlwrap -C passman -b '' -f completions -f "$EXTRA_COMP" "$realbin" "$@"
 fi
 
-[ ! "$(id -un)" = "passman" ] && [ -z "$PASSMAN_TEST" ] && {
+if [ ! "$(id -un)" = "$APPUSER" ] 
+    && [ -z "$PASSMAN_TEST" ]
+then
     exec sudo -u passman "$realbin" "$@"
-}
+fi
 
 function assist {
     if [ -z "$1" ]
     then
 	cat help/passman
     else
-	cat help/"$1" 2>/dev/null || { echo "That is not a command."; return 1; }
+	if ! cat help/"$1" 2>/dev/null
+	then
+	    echo "That is not a command."
+	    return 1
+	fi
     fi
     echo
     return 0
@@ -69,14 +79,10 @@ function validate-admin {
 	ATOKEN=$(decrypt group/admin."$UNAME" "$UTOKEN")
     fi
     return $?
-
 }
 
 function menu {
     local action=""
-
-    # change window title
-    printf "\033]0;passman@%s\007" "$(hostname)"
 
     while true
     do
@@ -127,9 +133,17 @@ function execute {
 
     case "$action" in
 	get )
-	    list-passwords | grep -q "^$1$" || { echo "Password '$1' doesn't exist." && return 1; }
+	    if ! list-passwords | grep -q "^$1$"
+	    then
+		echo "Password '$1' doesn't exist."
+		return 1
+	    fi
 	    validate || return $?
-	    show-pass "$UNAME" "$UTOKEN" "$1" || { echo "$UNAME cannot access $1." && return 1; }
+	    if ! show-pass "$UNAME" "$UTOKEN" "$1"
+	    then 
+		echo "$UNAME cannot access $1."
+		return 1
+	    fi
 	    return 0
 	    ;;
 	list )
@@ -292,7 +306,13 @@ function execute {
 	    
 	    validate-admin || return $?
 	    ${action}"-"$type "$ATOKEN" "$name" "$pass"
-	    echo "$type '$name' successfully $([ "$action" = "add" ] && echo "added" || echo "removed")."
+	    echo -n "$type '$name' successfully "
+	    if [ "$action" = "add" ]
+	    then 
+		echo "added." 
+	    else
+		echo "removed."
+	    fi
 	    return $?
 	    ;;
 	modify )
@@ -336,13 +356,19 @@ function execute {
 	    read -sp "Retype password: " pass2
 	    echo
 
-	    [ "$pass1" = "$pass2" ] && change-user-pass "$UTOKEN" "$UNAME" "$pass1"
+	    if [ "$pass1" = "$pass2" ]
+	    then 
+		change-user-pass "$UTOKEN" "$UNAME" "$pass1"
+	    fi
 	    result=$?
 
 	    unset pass1
 	    unset pass2
 	    
-	    [ "$result" = "0" ] && echo "Your password has been changed."
+	    if [ "$result" = "0" ] 
+	    then
+		echo "Your password has been changed."
+	    fi
 	    return "$result"
 	    ;;
 	promote )

@@ -1,25 +1,9 @@
 #!/bin/bash
 
-# The user that passman will run as. The user must not exist prior to running this script.
-APPUSER=passman
-
-# The system group that users must belong to to be able to run this application. 
-# Will be created if it doesn't exist.
-APPGROUP=passman
-
-# The directory that the application will be installed in.
-# The directory does not have to exist, but it must be empty if it does.
-APPHOME=/opt/passman
-
-# The name under which the application will be symlinked in /usr/local/bin.
-BINNAME=passman
-
-# Repository to clone from
-REPO=https://github.com/dsv-su/passman.git
-
-###################### Installer follows, do not edit ######################
-
 set -e
+
+BASEDIR=$(dirname "$(readlink -f "$0")")
+. "$BASEDIR"/config
 
 function die {
     echo "$1"
@@ -27,21 +11,40 @@ function die {
     exit $2
 }
 
-[ ! "$(id -u)" = 0 ] && {
+if ! [ "$(id -u)" = 0 ]
+then
     die "You must be root to install this application." 1
-}
+fi
 
-! which ccrypt &>/dev/null && {
+if ! which ccrypt &>/dev/null
+then
     die 'ccrypt not found. Please install it and make sure it is available in $PATH' 6
-}
+fi
 
-ls $APPHOME/* &>/dev/null && {
+if ls $APPHOME/* &>/dev/null
+then
     die "'$APPHOME' is not empty, please choose a different installation folder." 2
-}
+fi
 
-[ -h /usr/local/bin/$BINNAME ] && {
+if [ -h /usr/local/bin/$BINNAME ]
+then
     die "/usr/local/bin/$BINNAME already exists, please choose a different name." 3
-}
+fi
+
+if getent passwd "$APPUSER" &>/dev/null
+then
+    die "The user '$APPUSER' already exists. Please choose a different username." 7
+fi
+
+if getent group "$APPGROUP" &>/dev/null
+then
+    die "The group '$APPGROUP' already exists. Please choose a different group name." 8
+fi
+
+if [ -e /etc/sudoers.d/$BINNAME ]
+then
+    die "There is already a file /etc/sudoers.d/$BINNAME, please choose a different name" 5
+fi
 
 read -p "Initial administrator: " iuser
 read -sp "${iuser}'s password: " pw1
@@ -49,22 +52,17 @@ echo
 read -sp "Retype password: " pw2
 echo
 
-[ "$pw1" = "$pw2" ] || {
+if ! [ "$pw1" = "$pw2" ]
+then
     die "Passwords do not match, please try again." 4
-}
-
-
-[ -e /etc/sudoers.d/$BINNAME ] && {
-    rm /etc/sudoers.tmp || true
-    die "There is already a file /etc/sudoers.d/$BINNAME, please choose a different name" 5
-}
+fi
 
 touch /etc/sudoers.d/$BINNAME
 echo "%$APPGROUP ALL=($APPUSER) NOPASSWD: $APPHOME/passman" > /etc/sudoers.d/$BINNAME
 chmod 440 /etc/sudoers.d/$BINNAME
 
-groupadd -r $APPGROUP || true
-useradd -rN -d $APPHOME -s /bin/false -g $APPGROUP $APPUSER
+groupadd -r $APPGROUP
+useradd -rN -d $APPHOME -s /bin/false -g $APPGROUP $APPUSER 
 git clone $REPO $APPHOME
 ln -s $APPHOME/passman /usr/local/bin/$BINNAME
 
