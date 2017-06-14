@@ -18,7 +18,7 @@ fi
 
 if ! which ccrypt &>/dev/null
 then
-    die 'ccrypt not found. Please install it and make sure it is available in $PATH' 6
+    die 'ccrypt not found. Please install it and make sure it is available in $PATH.' 2
 fi
 
 if [ -h /usr/local/bin/$BINNAME ]
@@ -28,12 +28,17 @@ fi
 
 if getent passwd "$APPUSER" &>/dev/null
 then
-    die "The user '$APPUSER' already exists. Please choose a different username." 7
+    die "The user '$APPUSER' already exists. Please choose a different username." 4
 fi
 
 if [ -e /etc/sudoers.d/$BINNAME ]
 then
-    die "There is already a file /etc/sudoers.d/$BINNAME, please choose a different name" 5
+    die "There is already a file /etc/sudoers.d/$BINNAME, please choose a different name." 5
+fi
+
+if [ -e /etc/bash_completion.d/$BINNAME ]
+then
+    die "There is already a file /etc/bash_completion.d/$BINNAME, please choose a different name." 6
 fi
 
 read -p "Initial administrator: " iuser
@@ -44,7 +49,7 @@ echo
 
 if ! [ "$pw1" = "$pw2" ]
 then
-    die "Passwords do not match, please try again." 4
+    die "Passwords do not match, please try again." 7
 fi
 
 touch /etc/sudoers.d/$BINNAME
@@ -54,6 +59,7 @@ chmod 440 /etc/sudoers.d/$BINNAME
 groupadd -r $APPGROUP 2>/dev/null || true
 useradd -rN -d $BASEDIR -s /bin/false -g $APPGROUP $APPUSER 
 ln -s $BASEDIR/passman /usr/local/bin/$BINNAME
+ln -s $BASEDIR/bash_completions /etc/bash_completion.d/$BINNAME
 
 . cryptapi.sh
 bootstrap $iuser $pw1
