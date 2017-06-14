@@ -80,6 +80,7 @@ function validate-admin {
 function menu {
     local action=""
 
+    trap 'echo' exit
     while true
     do
 	echo -n "passman> "
