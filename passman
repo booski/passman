@@ -9,7 +9,7 @@ cd $(dirname "$realbin")
 API="cryptapi.sh"
 CONFIG="config"
 LEGAL_CHARS="[[:alnum:]_-]"
-UNAME=""
+UNAME=$SUDO_USER
 UTOKEN=""
 
 ATOKEN=""
@@ -53,10 +53,6 @@ function assist {
 }
 
 function validate {
-    if [ -z "$UNAME" ]
-    then
-	UNAME=$SUDO_USER
-    fi
     if [ -z "$UTOKEN" ]
     then
 	read -sp "${UNAME}'s Password: " pw
