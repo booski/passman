@@ -1,8 +1,12 @@
 #!/bin/bash
 
+echo "There are no working tests at this time."
+exit 1
+
 set -e
 
 E_BADSTATE="1"
+E_BADRESULT="2"
 
 die() {
     reason=$1
@@ -12,11 +16,18 @@ die() {
     case "$reason" in
 	"$E_BADSTATE" )
 	    echo "This test is only intended to run against a 'clean' install of passman."
-	    echo -n "The problem is: "
-	    echo "$message"
 	    code=1
 	    ;;
+	"$E_BADRESULT" )
+	    echo "A command failed to give the expected result."
+	    code=2
+	    ;;
+	* )
+	    echo "An invalid error was reported. This should never happen."
+	    echo "The invalid error was '$reason'."
+	    code=99
     esac
+    echo "$message"
     exit "$code"
 }
 
@@ -37,6 +48,4 @@ do
     fi
 done
 
-puser=$(passman list user)
-
-passman demote "$puser"
+# Put tests here
