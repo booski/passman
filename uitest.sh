@@ -25,16 +25,13 @@ do
     count=0
     for entry in $(passman list "$item")
     do
-	if [ -n "$entry" ]
-	then
-	    count=$((count+1))
-	fi
+	count=$((count+1))
     done
     
     if [ "$item" = pass ] && ! [ "$count" = 0 ]
     then
 	die "$E_BADSTATE" "The database contains a password already."
-    elif ! [ "$count" -gt 1 ]
+    elif [ "$count" -gt 1 ]
     then
 	die "$E_BADSTATE" "There is more than one $item in the database."
     fi
