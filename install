@@ -36,11 +36,6 @@ then
     die "The user '$APPUSER' already exists. Please choose a different username." 7
 fi
 
-if getent group "$APPGROUP" &>/dev/null
-then
-    die "The group '$APPGROUP' already exists. Please choose a different group name." 8
-fi
-
 if [ -e /etc/sudoers.d/$BINNAME ]
 then
     die "There is already a file /etc/sudoers.d/$BINNAME, please choose a different name" 5
@@ -61,7 +56,7 @@ touch /etc/sudoers.d/$BINNAME
 echo "%$APPGROUP ALL=($APPUSER) NOPASSWD: $APPHOME/passman" > /etc/sudoers.d/$BINNAME
 chmod 440 /etc/sudoers.d/$BINNAME
 
-groupadd -r $APPGROUP
+groupadd -r $APPGROUP 2>/dev/null || true
 useradd -rN -d $APPHOME -s /bin/false -g $APPGROUP $APPUSER 
 git clone $REPO $APPHOME
 ln -s $APPHOME/passman /usr/local/bin/$BINNAME
