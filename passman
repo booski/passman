@@ -20,8 +20,8 @@ SCRIPT="$0"
 . "$CONFIG"
 
 # Enable command line editing, history and completion
-if [ -z "$RLWRAP_RUNNING" ] 
-    && which rlwrap >/dev/null 
+if [ -z "$RLWRAP_RUNNING" ] \
+    && which rlwrap >/dev/null \
     && [ "$(id -un)" != "$APPUSER" ]
 then
     EXTRA_COMP="$HOME"/.passman_completions
