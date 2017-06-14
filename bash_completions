@@ -1,0 +1,98 @@
+#!/bin/bash
+
+contains() {
+    local value item
+    value="$1"
+    shift
+    
+    for item in "$@"; do
+	if [ "$item" = "$value" ]; then
+	    return 0
+	fi
+    done
+    return 1
+}
+
+prepend() {
+    local char list out
+    char="$1"
+    shift
+    list="$@"
+    
+    out=''
+    for item in "$list"; do
+	out="$out ${char}${item}"
+    done
+    printf "%s" "$out"
+}
+
+_passman() {
+    local first cur prev general base switches completions
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    base="get list info passwd help add del modify manage promote demote"
+    switches="-u -e"
+
+	# -e "^$" \
+	# -e "^get $LEGAL_CHARS+$" \
+	# -e "^passwd$" \
+        # -e "^list (user|group|pass).*$" \
+	# -e "^info (user|group|pass) $LEGAL_CHARS+$" \
+        # -e "^manage (user|pass) $LEGAL_CHARS+ [+-]$LEGAL_CHARS+$" \
+	# -e "^modify $LEGAL_CHARS" \
+        # -e "^add (user|group|pass) $LEGAL_CHARS+$" \
+        # -e "^del (user|group|pass) $LEGAL_CHARS+$" \
+        # -e "^(promote|demote) $LEGAL_CHARS+$" \
+	# -e "^help $LEGAL_CHARS+$" \
+
+    completions=''
+    if [ "$cur" = -* ]; then
+	completions="$switches"
+    elif contains "manage" "${COMP_WORDS[@]}"; then
+	case "$prev" in
+	    "manage" )
+		completions="user pass"
+		;;
+	    "user"|"pass" )
+		completions=$(passman list "$prev")
+		;;
+	    * )
+		local preprev initial
+		preprev="${COMP_WORDS[COMP_CWORD-2]}"
+		if [ "$preprev" = "user" ] || [ "$preprev" = "pass" ]; then
+		    initial=$(passman list group)
+		    completions="$(prepend "+" $initial)"
+		    completions="$completions $(prepend "-" $initial)"
+		fi
+		;;
+	esac
+    else
+	case "$prev" in
+	    "passman")
+		completions="$base $switches"
+		;;
+	    "help" )
+		if [ "$first" = "help" ]; then
+		    completions="$base"
+		fi
+		;;
+	    "get"|"modify" )
+		completions=$(passman list pass)
+		;;
+	    "list"|"info"|"add"|"del" )
+		completions="user group pass"
+		;;
+	    "-u"|"promote"|"demote" )
+		completions=$(passman list user)
+		;;
+	    "user"|"group"|"pass" )
+		completions=$(passman list "$prev")
+		;;
+	esac
+    fi
+    
+    COMPREPLY=($(compgen -W "${completions}" -- "${cur}"))
+    return 0
+}
+complete -F _passman passman
