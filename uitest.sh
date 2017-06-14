@@ -25,7 +25,10 @@ do
     count=0
     for entry in $(passman list "$item")
     do
-	count=$((count+1))
+	if [ -n "$entry" ]
+	then
+	    count=$((count+1))
+	fi
     done
     
     if [ "$item" = pass ] && ! [ "$count" = 0 ]
