@@ -380,12 +380,12 @@ function execute {
 	    ;;
 	demote )
 	    name="$1"
-	    validate-admin || return $?
 	    if [ "$name" == "$UNAME" ]
 	    then
 		echo "You cannot demote yourself, not doing anything."
 		return 1
 	    fi
+	    validate-admin || return $?
 	    unmake-user-admin "$ATOKEN" "$name"
 	    echo "'$name' is no longer an administrator."
 	    return $?
