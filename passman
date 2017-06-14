@@ -34,7 +34,7 @@ fi
 if [ ! "$(id -un)" = "$APPUSER" ] \
     && [ -z "$PASSMAN_TEST" ]
 then
-    exec sudo -u passman "$realbin" "$@"
+    exec sudo -u "$APPUSER" "$realbin" "$@"
 fi
 
 function assist {
@@ -112,7 +112,7 @@ function execute {
         -e "^add (user|group|pass) $LEGAL_CHARS+$" \
         -e "^del (user|group|pass) $LEGAL_CHARS+$" \
         -e "^(promote|demote) $LEGAL_CHARS+$" \
-	-e "^help $LEGAL_CHARS" \
+	-e "^help $LEGAL_CHARS+$" \
 	2>&1 >/dev/null
     then
 	assist
@@ -271,6 +271,7 @@ function execute {
 			    ;;
 			pass )
 			    tmpfile="tmp-$(date +%y%m%d%H%M%S)"
+			    trap "rm -f $tmpfile" EXIT
 			    touch "$tmpfile"
 			    chmod 600 "$tmpfile"
 			    
@@ -285,7 +286,7 @@ function execute {
 			    then
 				echo -e '\n' >> "$tmpfile"
 				pass=$(cat "$tmpfile")
-				rm "$tmpfile"*
+				rm "$tmpfile"
 			    else
 				echo "No password data given, not doing anything."
 				return 1
@@ -317,6 +318,7 @@ function execute {
 	    validate-admin || return $?
 
 	    tmpfile="tmp-$(date +%y%m%d%H%M%S)"
+	    trap "rm -f $tmpfile" EXIT
 	    touch "$tmpfile"
 	    chmod 600 "$tmpfile"
 	    show-pass "$UNAME" "$UTOKEN" "$pname" > "$tmpfile"
