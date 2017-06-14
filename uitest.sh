@@ -39,17 +39,4 @@ done
 
 puser=$(passman list user)
 
-(
-    cat <<EOF
-add pass temp
-add user temp
-add group temp
-manage user temp +temp
-manage user temp -temp
-manage pass temp +temp
-manage pass temp -temp
-promote temp
-demote temp
-demote $puser
-EOF
-) | passman
+passman demote "$puser"

@@ -106,7 +106,7 @@ function list-user-groups {
 # prints all groups that '$1' belongs to as a space-delimited list
     
     local out=$(ls group/*.$uname 2>/dev/null | sed -r -e "s%^group/%%" -e "s%\.$uname$%%" | sort -u)
-    printf "$out\n"
+    printf "%s\n" "$out"
 }
 
 function list-group-passes {
@@ -115,7 +115,7 @@ function list-group-passes {
 # does not decrypt any passwords
     
     local out=$(ls pass/*.$gname 2>/dev/null | sed -r -e "s%^pass/%%" -e "s%\.$gname$%%" | sort -u)
-    printf "$out\n"
+    printf "%s\n" "$out"
 }
 
 function list-password-groups {
@@ -123,7 +123,7 @@ function list-password-groups {
 # prints all the groups that '$1' belongs to as a space-delimited list
     
     local out=$(ls pass/$pname.* 2>/dev/null | sed -r "s%^pass/$pname\.%%" | sort -u)
-    printf "$out\n"
+    printf "%s\n" "$out"
 }
 
 function list-group-users {
@@ -131,24 +131,24 @@ function list-group-users {
 # prints all the users that belong to '$1' as a space-delimited list
 
     local out=$(ls group/$gname.* 2>/dev/null | sed -r "s%^group/$gname\.%%" | sort -u)
-    printf "$out\n"
+    printf "%s\n" "$out"
 }
 
 function list-passwords {
 # prints all the passwords stored in the system
 # does not decrypt any passwords, only prints identifiers
-    local out=$(ls pass/ | sed -r -e "s%^pass/%%" -e "s%.[^.]+$%%" | sort -u)
-    printf "$out\n"
+    local out=$(ls pass/ | sed -r -e "s%^pass/%%" -e "s%\.[^.]+$%%" | sort -u)
+    printf "%s\n" "$out"
 }
 
 function list-users {
-    local out=$(ls user/ | sed -r -e "s%^user/%%" -e "s%.[^.]+$%%" | sort -u)
-    printf "$out\n"
+    local out=$(ls user/ | sed -r -e "s%^user/%%" -e "s%\.[^.]+$%%" | sort -u)
+    printf "%s\n" "$out"
 }
 
 function list-groups {
-    local out=$(ls group/ | sed -r -e "s%^group/%%" -e "s%.[^.]+$%%" | sort -u)
-    printf "$out\n"
+    local out=$(ls group/ | sed -r -e "s%^group/%%" -e "s%\.[^.]+$%%" | sort -u)
+    printf "%s\n" "$out"
 }
 
 function list-available {
@@ -164,8 +164,8 @@ function list-available {
 	passes=$(list-group-passes "$gname")' '"$passes"
     done
 
-    local out=$(printf "$passes" | sort -u)
-    printf "$out\n"
+    local out=$(printf "%s" "$passes" | sort -u)
+    printf "%s\n" "$out"
 }
 
 function show-pass {
