@@ -21,11 +21,6 @@ then
     die 'ccrypt not found. Please install it and make sure it is available in $PATH' 6
 fi
 
-if ls $APPHOME/* &>/dev/null
-then
-    die "'$APPHOME' is not empty, please choose a different installation folder." 2
-fi
-
 if [ -h /usr/local/bin/$BINNAME ]
 then
     die "/usr/local/bin/$BINNAME already exists, please choose a different name." 3
@@ -53,18 +48,14 @@ then
 fi
 
 touch /etc/sudoers.d/$BINNAME
-echo "%$APPGROUP ALL=($APPUSER) NOPASSWD: $APPHOME/passman" > /etc/sudoers.d/$BINNAME
+echo "%$APPGROUP ALL=($APPUSER) NOPASSWD: $BASEDIR/passman" > /etc/sudoers.d/$BINNAME
 chmod 440 /etc/sudoers.d/$BINNAME
 
 groupadd -r $APPGROUP 2>/dev/null || true
-useradd -rN -d $APPHOME -s /bin/false -g $APPGROUP $APPUSER 
-git clone $REPO $APPHOME
-ln -s $APPHOME/passman /usr/local/bin/$BINNAME
+useradd -rN -d $BASEDIR -s /bin/false -g $APPGROUP $APPUSER 
+ln -s $BASEDIR/passman /usr/local/bin/$BINNAME
 
-(
-    cd $APPHOME
-    . cryptapi.sh
-    bootstrap $iuser $pw1
-)
+. cryptapi.sh
+bootstrap $iuser $pw1
 
-chown -R $APPUSER $APPHOME
+chown -R $APPUSER $BASEDIR
