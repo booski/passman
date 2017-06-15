@@ -47,7 +47,7 @@ function bootstrap {
     return 0
 }
 
-function validate-user {
+function get-user-token {
     local uname=$1
     local pass=$2
 # prints the token associated with '$1' by decrypting the file 
@@ -57,7 +57,7 @@ function validate-user {
     decrypt user/"$uname" "$pass"
 }
 
-function validate-admin {
+function get-admin-token {
     local uname="$1"
     local pass="$2"
 # prints the token associated with '$1' by decrypting the file
