@@ -1,6 +1,6 @@
 #!/bin/bash
 
-_contains() {
+__contains() {
     local value item
     value="$1"
     shift
@@ -13,7 +13,7 @@ _contains() {
     return 1
 }
 
-_prepend() {
+__prepend() {
     local char list out
     char="$1"
     shift
@@ -26,14 +26,14 @@ _prepend() {
 }
 
 _passman() {
-    local first cur prev general base switches completions
+    local cur prev base switches completions
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     base="get list info passwd help add del modify manage promote demote"
     switches="-u -e"
-
     completions=''
+
     if [ "$cur" = -* ]; then
 	completions="$switches"
     elif _contains "manage" "${COMP_WORDS[@]}"; then
@@ -49,8 +49,8 @@ _passman() {
 		preprev="${COMP_WORDS[COMP_CWORD-2]}"
 		if [ "$preprev" = "user" ] || [ "$preprev" = "pass" ]; then
 		    initial=$(passman list group)
-		    completions="$(_prepend "+" $initial)"
-		    completions="$completions $(_prepend "-" $initial)"
+		    completions="$(__prepend "+" $initial)"
+		    completions="$completions $(__prepend "-" $initial)"
 		fi
 		;;
 	esac
@@ -60,7 +60,7 @@ _passman() {
 		completions="$base $switches"
 		;;
 	    "help" )
-		if [ "$first" = "help" ]; then
+		if [ "${COMP_WORDS[1]}" = "help" ]; then
 		    completions="$base"
 		fi
 		;;
