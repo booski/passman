@@ -2,56 +2,64 @@
 
 set -e
 
-realbin=$(readlink -f "$0")
+SCRIPT="$0"
+realbin=$(readlink -f "$SCRIPT")
 
 cd $(dirname "$realbin")
 
 API="cryptapi.sh"
-LEGAL_CHARS="[[:alnum:]_-]"
-UNAME=""
-UTOKEN=""
+CONFIG="config"
 
+LEGAL_CHARS="[[:alnum:]_-]"
+
+UNAME=$SUDO_USER
+UTOKEN=""
 ATOKEN=""
 
-SCRIPT="$0"
+EDITOR="editor"
 
 . "$API"
+. "$CONFIG"
 
-# Enable command line editing, history and completion
-if [ -z "$RLWRAP_RUNNING" ] && which rlwrap >/dev/null &&
-    [ "$(id -un)" != passman ]; then
-    EXTRA_COMP="$HOME"/.passman_completions
-    list-passwords > "$EXTRA_COMP"
-    touch "$HOME"/.passman_history
-    export RLWRAP_RUNNING=1
-    exec rlwrap -C passman -b '' -f completions -f "$EXTRA_COMP" "$realbin" "$@"
+if [ ! "$(id -un)" = "$APPUSER" ]
+then
+    if which rlwrap >/dev/null && [ -z "$RLWRAP_RUNNING" ]
+    then
+	EXTRA_COMP="$HOME"/.passman_completions
+	list-passwords > "$EXTRA_COMP"
+	touch "$HOME"/.passman_history
+	export RLWRAP_RUNNING=1
+	exec rlwrap -C passman -b '' \
+	    -f completions \
+	    -f "$EXTRA_COMP" \
+	    "$realbin" "$@"
+    else
+	exec sudo -u "$APPUSER" "$realbin" "$@"
+    fi
 fi
 
-[ ! "$(id -un)" = "passman" ] && [ -z "$PASSMAN_TEST" ] && {
-    exec sudo -u passman "$realbin" "$@"
-}
 
 function assist {
     if [ -z "$1" ]
     then
 	cat help/passman
     else
-	cat help/"$1" 2>/dev/null || { echo "That is not a command."; return 1; }
+	if ! cat help/"$1" 2>/dev/null
+	then
+	    echo "That is not a command."
+	    return 1
+	fi
     fi
     echo
     return 0
 }
 
 function validate {
-    if [ -z "$UNAME" ]
-    then
-	UNAME=$SUDO_USER
-    fi
     if [ -z "$UTOKEN" ]
     then
 	read -sp "${UNAME}'s Password: " pw
 	echo
-	UTOKEN=$(decrypt user/"$UNAME" "$pw")
+	UTOKEN=$(get-user-token "$UNAME" "$pw")
 	local result=$?
 	unset pw
 	if [ "$result" != "0" ]
@@ -63,25 +71,38 @@ function validate {
 }
 
 function validate-admin {
-    validate
-    if [ -z "$ATOKEN" ]
+    if [ -n "$ATOKEN" ]
     then
-	ATOKEN=$(decrypt group/admin."$UNAME" "$UTOKEN")
+	return 0
     fi
-    return $?
 
+    local admin group
+    admin=''
+    for group in $(list-user-groups "$UNAME")
+    do
+	if [ "$group" = "admin" ]
+	then
+	    admin=1
+	    break
+	fi
+    done
+    if [ -z "$admin" ]
+    then
+	echo "You are not an administrator."
+	return "$E_PRIVILEGE"
+    fi
+    validate
+    ATOKEN=$(get-admin-token "$UNAME" "$UTOKEN")
+    return $?
 }
 
 function menu {
     local action=""
 
-    # change window title
-    printf "\033]0;passman@%s\007" "$(hostname)"
-
     while true
     do
-	echo -n "passman> "
-	read action
+	trap 'rm -f tmp-*; echo' exit
+	read -p 'passman> ' action
 
 	case "$action" in
 	    quit|q )
@@ -109,7 +130,7 @@ function execute {
         -e "^add (user|group|pass) $LEGAL_CHARS+$" \
         -e "^del (user|group|pass) $LEGAL_CHARS+$" \
         -e "^(promote|demote) $LEGAL_CHARS+$" \
-	-e "^help $LEGAL_CHARS" \
+	-e "^help $LEGAL_CHARS+$" \
 	2>&1 >/dev/null
     then
 	assist
@@ -127,9 +148,17 @@ function execute {
 
     case "$action" in
 	get )
-	    list-passwords | grep -q "^$1$" || { echo "Password '$1' doesn't exist." && return 1; }
+	    if ! list-passwords | grep -q "^$1$"
+	    then
+		echo "Password '$1' doesn't exist."
+		return 1
+	    fi
 	    validate || return $?
-	    show-pass "$UNAME" "$UTOKEN" "$1" || { echo "$UNAME cannot access $1." && return 1; }
+	    if ! show-pass "$UNAME" "$UTOKEN" "$1"
+	    then 
+		echo "$UNAME cannot access $1."
+		return 1
+	    fi
 	    return 0
 	    ;;
 	list )
@@ -195,6 +224,7 @@ function execute {
 	    esac
 	    ;;
 	manage )
+	    validate-admin || return $?
 	    type="$1"
 	    name="$2"
 	    action="${3:0:1}"
@@ -215,7 +245,6 @@ function execute {
 		    return $?
 	    esac
 	    
-	    validate-admin || return $?
 	    ${action}-${type}-group "$ATOKEN" "$name" "$group"
 	    local result=$?
 	    case "$result" in
@@ -235,6 +264,7 @@ function execute {
 	    return "$result"
 	    ;;
 	add|del )
+	    validate-admin || return $?
 	    type="$1"
 	    name="$2"
 	    local message=""
@@ -260,21 +290,17 @@ function execute {
 			    ;;
 			pass )
 			    tmpfile="tmp-$(date +%y%m%d%H%M%S)"
+			    trap "rm -f $tmpfile" EXIT
 			    touch "$tmpfile"
 			    chmod 600 "$tmpfile"
 			    
-			    if [ -z "$EDITOR" ]
-			    then 
-				editor "$tmpfile"
-			    else
-			        "$EDITOR" "$tmpfile"
-			    fi
+			    "$EDITOR" "$tmpfile"
 			    
 			    if [ -s "$tmpfile" ]
 			    then
 				echo -e '\n' >> "$tmpfile"
 				pass=$(cat "$tmpfile")
-				rm "$tmpfile"*
+				rm "$tmpfile"
 			    else
 				echo "No password data given, not doing anything."
 				return 1
@@ -290,26 +316,27 @@ function execute {
 		    ;;
 	    esac
 	    
-	    validate-admin || return $?
 	    ${action}"-"$type "$ATOKEN" "$name" "$pass"
-	    echo "$type '$name' successfully $([ "$action" = "add" ] && echo "added" || echo "removed")."
+	    echo -n "$type '$name' successfully "
+	    if [ "$action" = "add" ]
+	    then 
+		echo "added." 
+	    else
+		echo "removed."
+	    fi
 	    return $?
 	    ;;
 	modify )
-	    local pname="$1"
 	    validate-admin || return $?
+	    local pname="$1"
 
 	    tmpfile="tmp-$(date +%y%m%d%H%M%S)"
+	    trap "rm -f $tmpfile" EXIT
 	    touch "$tmpfile"
 	    chmod 600 "$tmpfile"
 	    show-pass "$UNAME" "$UTOKEN" "$pname" > "$tmpfile"
 
-	    if [ -z "$EDITOR" ]
-	    then 
-		editor "$tmpfile"
-	    else
-		"$EDITOR" "$tmpfile"
-	    fi
+	    "$EDITOR" "$tmpfile"
 	    
 	    if [ -s "$tmpfile" ]
 	    then
@@ -327,39 +354,45 @@ function execute {
 	    return 0
 	    ;;
 	passwd )
+	    validate || return $?
 	    local pass1=""
 	    local pass2=""
 
-	    validate || return $?
 	    read -sp "New password: " pass1
 	    echo
 	    read -sp "Retype password: " pass2
 	    echo
 
-	    [ "$pass1" = "$pass2" ] && change-user-pass "$UTOKEN" "$UNAME" "$pass1"
+	    if [ "$pass1" = "$pass2" ]
+	    then 
+		change-user-pass "$UTOKEN" "$UNAME" "$pass1"
+	    fi
 	    result=$?
 
 	    unset pass1
 	    unset pass2
 	    
-	    [ "$result" = "0" ] && echo "Your password has been changed."
+	    if [ "$result" = "0" ] 
+	    then
+		echo "Your password has been changed."
+	    fi
 	    return "$result"
 	    ;;
 	promote )
-	    name=$1
 	    validate-admin || return $?
+	    name=$1
 	    make-user-admin "$ATOKEN" "$name"
 	    echo "'$name' is now an administrator."
 	    return 0
 	    ;;
 	demote )
 	    name="$1"
-	    validate-admin || return $?
 	    if [ "$name" == "$UNAME" ]
 	    then
 		echo "You cannot demote yourself, not doing anything."
 		return 1
 	    fi
+	    validate-admin || return $?
 	    unmake-user-admin "$ATOKEN" "$name"
 	    echo "'$name' is no longer an administrator."
 	    return $?

@@ -1,0 +1,10 @@
+# The user that passman will run as. 
+# The user must not exist prior to running this script.
+APPUSER=passman
+
+# The group that users must belong to to be able to run this application. 
+# Will be created if it doesn't exist.
+APPGROUP=passman
+
+# The name under which the application will be symlinked in /usr/local/bin.
+BINNAME=passman
