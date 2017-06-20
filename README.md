@@ -7,7 +7,7 @@ Installation
 ------------
 
     sudo apt-get install ccrypt pwgen rlwrap
-    git clone https://github.com/dsv-su/passman.git
+    git clone https://github.com/booski/passman.git
     cd passman
     cp config.example config
     sudo bash install
