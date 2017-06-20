@@ -2,40 +2,42 @@
 
 set -e
 
-realbin=$(readlink -f "$0")
+SCRIPT="$0"
+realbin=$(readlink -f "$SCRIPT")
 
 cd $(dirname "$realbin")
 
 API="cryptapi.sh"
 CONFIG="config"
+
 LEGAL_CHARS="[[:alnum:]_-]"
+
 UNAME=$SUDO_USER
 UTOKEN=""
-
 ATOKEN=""
 
-SCRIPT="$0"
+EDITOR="editor"
 
 . "$API"
 . "$CONFIG"
 
-# Enable command line editing, history and completion
-if [ -z "$RLWRAP_RUNNING" ] \
-    && which rlwrap >/dev/null \
-    && [ "$(id -un)" != "$APPUSER" ]
+if [ ! "$(id -un)" = "$APPUSER" ]
 then
-    EXTRA_COMP="$HOME"/.passman_completions
-    list-passwords > "$EXTRA_COMP"
-    touch "$HOME"/.passman_history
-    export RLWRAP_RUNNING=1
-    exec rlwrap -C passman -b '' -f completions -f "$EXTRA_COMP" "$realbin" "$@"
+    if which rlwrap >/dev/null && [ -z "$RLWRAP_RUNNING" ]
+    then
+	EXTRA_COMP="$HOME"/.passman_completions
+	list-passwords > "$EXTRA_COMP"
+	touch "$HOME"/.passman_history
+	export RLWRAP_RUNNING=1
+	exec rlwrap -C passman -b '' \
+	    -f completions \
+	    -f "$EXTRA_COMP" \
+	    "$realbin" "$@"
+    else
+	exec sudo -u "$APPUSER" "$realbin" "$@"
+    fi
 fi
 
-if [ ! "$(id -un)" = "$APPUSER" ] \
-    && [ -z "$PASSMAN_TEST" ]
-then
-    exec sudo -u "$APPUSER" "$realbin" "$@"
-fi
 
 function assist {
     if [ -z "$1" ]
@@ -97,11 +99,10 @@ function validate-admin {
 function menu {
     local action=""
 
-    trap 'echo' exit
     while true
     do
-	echo -n "passman> "
-	read action
+	trap 'rm -f tmp-*; echo' exit
+	read -p 'passman> ' action
 
 	case "$action" in
 	    quit|q )
@@ -293,12 +294,7 @@ function execute {
 			    touch "$tmpfile"
 			    chmod 600 "$tmpfile"
 			    
-			    if [ -z "$EDITOR" ]
-			    then 
-				editor "$tmpfile"
-			    else
-			        "$EDITOR" "$tmpfile"
-			    fi
+			    "$EDITOR" "$tmpfile"
 			    
 			    if [ -s "$tmpfile" ]
 			    then
@@ -340,12 +336,7 @@ function execute {
 	    chmod 600 "$tmpfile"
 	    show-pass "$UNAME" "$UTOKEN" "$pname" > "$tmpfile"
 
-	    if [ -z "$EDITOR" ]
-	    then 
-		editor "$tmpfile"
-	    else
-		"$EDITOR" "$tmpfile"
-	    fi
+	    "$EDITOR" "$tmpfile"
 	    
 	    if [ -s "$tmpfile" ]
 	    then
