@@ -36,7 +36,7 @@ _passman() {
 
     if [ "$cur" = -* ]; then
 	completions="$switches"
-    elif _contains "manage" "${COMP_WORDS[@]}"; then
+    elif __contains "manage" "${COMP_WORDS[@]}"; then
 	case "$prev" in
 	    "manage" )
 		completions="user pass"

@@ -25,13 +25,10 @@ if [ ! "$(id -un)" = "$APPUSER" ]
 then
     if which rlwrap >/dev/null && [ -z "$RLWRAP_RUNNING" ]
     then
-	EXTRA_COMP="$HOME"/.passman_completions
-	list-passwords > "$EXTRA_COMP"
 	touch "$HOME"/.passman_history
 	export RLWRAP_RUNNING=1
 	exec rlwrap -C passman -b '' \
-	    -f completions \
-	    -f "$EXTRA_COMP" \
+	    -z ./completion.pm \
 	    "$realbin" "$@"
     else
 	exec sudo -u "$APPUSER" "$realbin" "$@"
